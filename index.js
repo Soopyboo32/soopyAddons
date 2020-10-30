@@ -3,13 +3,21 @@
 module.exports = {};
 
 
+//					Code for soopyaddons
+//					 Have fun reading it
+//							lmao
+
+
+
+
+
 //import Promise from 'Promise';
 //import request from "request";
 // import numeral from 'numeraljs';
 // import sendRequest from "slothpixel/requests";
 import soopySettings from 'soopyAddons/settings.js';
 import versionData from 'soopyAddons/updateDetecter.js';
-import grindDisplay from 'soopyAddons/currGrindDisplay.js';
+//import grindDisplay from 'soopyAddons/currGrindDisplay.js';
 import { newSideMessage, setLocation } from "soopyApis";
 import { addCustomCompletion } from "CustomTabCompletions";
 const GlStateManager = Java.type("net.minecraft.client.renderer.GlStateManager");
@@ -48,7 +56,7 @@ register("worldLoad", () => {
 					if (update.versionId > soopySettings.getSetting("hidden", "versionId")) {
 						ChatLib.chat("&6Soopy&7Addons " + update.version + " changelog:")
 						update.changeLog.forEach((line) => {
-							ChatLib.chat("&7 - " + line)
+							ChatLib.chat("&7 " + line)
 						})
 					}
 				})
@@ -93,7 +101,9 @@ const settings = new SettingsObject(
 				ChatLib.chat(" &r- &6Phxntomexile &7: Beta tester and Lots of ideas");
 				ChatLib.chat(" &r- &6Agentlai &7: Beta tester");
 				ChatLib.chat(" &r- &6vNoxus &7: Ideas and bug testing");
-			})
+			}),
+			new Setting.Button("If you cannot see the tabs at the top of the settings", "click", () => { }),
+			new Setting.Button("Turn down ur gui scale (u can turn it back after)", "click", () => { })
 		]
 	},
 	{
@@ -157,10 +167,8 @@ const settings = new SettingsObject(
 			new Setting.Toggle("Show spirit bear / correct livid HP", true),
 			new Setting.Slider("Spirit Bear HP X", 10, 0, Math.max(Renderer.screen.getWidth(), 600), 0),
 			new Setting.Slider("Spirit Bear HP Y", 40, 0, Math.max(Renderer.screen.getHeight(), 600), 0),
-			new Setting.Toggle("Show total midas staff dmg", true),
-			new Setting.Slider("Midas staff dmg X", 10, 0, Math.max(Renderer.screen.getWidth(), 600), 0),
-			new Setting.Slider("Midas staff dmg Y", 40, 0, Math.max(Renderer.screen.getHeight(), 600), 0),
 			new Setting.Toggle("Show box around Spirit Bear and Spirit Bow and Correct Livid", true),
+			new Setting.Toggle("Hide nametags of incorrect livids", true),
 			new Setting.Toggle("Show no armour message when entering a dungeon", true),
 			new Setting.Toggle("Put a box around bats", true),
 			new Setting.Toggle("Put a red box around skeleton masters", true)
@@ -202,7 +210,7 @@ const settings = new SettingsObject(
 );
 
 
-settings.setCommand("soopyaddons").setSize(500, 400);
+settings.setCommand("soopyaddons").setSize(500, 350);
 Setting.register(settings);
 
 function resetSettings() {
@@ -553,16 +561,13 @@ function renderOverlay() {
 	if (settings.getSetting("Dungeons", "Show spirit bear / correct livid HP") && spiritBearName !== null) {
 		Renderer.drawString(spiritBearName, settings.getSetting("Dungeons", "Spirit Bear HP X"), settings.getSetting("Dungeons", "Spirit Bear HP Y"));
 	}
-	if (settings.getSetting("Dungeons", "Show total midas staff dmg") && inDungeons) {
-		Renderer.drawString("&6Midas Staff dmg&7: " + numberWithCommas(totalDmg), settings.getSetting("Dungeons", "Midas staff dmg X"), settings.getSetting("Dungeons", "Midas staff dmg Y"));
-	}
 
-	if (settings.getSetting("HUD", "Show 'BOSS SLAIN' Message when you have a empty slayer quest") && bossSpawnedMessage) {
+	if (settings.getSetting("HUD", "Show 'BOSS SLAIN' Message when you have a empty slayer quest") && bossSlainMessage) {
 		Renderer.scale(10, 10)
 		Renderer.drawString("&4BOSS SLAIN", Renderer.screen.getWidth() / 10 / 2 - Renderer.getStringWidth("BOSS SLAIN") / 2, Renderer.screen.getHeight() / 10 / 2 - 5)
 		Renderer.scale(1, 1)
 	}
-	if (settings.getSetting("HUD", "Show 'BOSS SPAWNED' Message when you have spawned a slayer") && bossSlainMessage) {
+	if (settings.getSetting("HUD", "Show 'BOSS SPAWNED' Message when you have spawned a slayer") && bossSpawnedMessage) {
 		if (now - lastBossNotSpawnedTime < 3000) {
 			Renderer.scale(10, 10)
 			Renderer.drawString("&4BOSS SPAWNED", Renderer.screen.getWidth() / 10 / 2 - Renderer.getStringWidth("BOSS SPAWNED") / 2, Renderer.screen.getHeight() / 10 / 2 - 5)
@@ -758,15 +763,9 @@ register("command", (e) => {
 }).setName("lskills")
 
 let playerSkills = {}
-let totalDmg = 0
 TriggerRegister.registerWorldLoad(function () {
 	playerSkills = {}
-	totalDmg = 0
 });
-register("chat", (dmg) => {
-	dmg = parseFloat(dmg.replace(/,/g, ""))
-	totalDmg += dmg
-}).setChatCriteria("&r&7Your Molten Wave hit &r&c${*} &r&7enem${*} for &r&c${dmg} &r&7damage.&r")
 let lastTime1 = 0;
 
 const chars = [
@@ -1454,9 +1453,7 @@ let tickEvent = register("tick", () => {
 
 		if (line.getName().includes('Slay the boss!')) {
 			dis1 = true
-			if (now - lastBossNotSpawnedTime < 3000) {
-				bossSpawnedMessage = true
-			}
+			bossSpawnedMessage = true
 		}
 		if (line.getName().includes('Dungeon Cleared:')) {
 			if (parseInt(line.getName().substr(19, 2)) >= 80) {
@@ -1480,6 +1477,7 @@ let tickEvent = register("tick", () => {
 	})
 	if (!dis1) {
 		lastBossNotSpawnedTime = now
+		bossSpawnedMessage = false
 	}
 	if (!dis2) {
 		lastDungBelow80 = now
@@ -1540,6 +1538,11 @@ let renderEntity = register("renderEntity", function (entity, position, ticks, e
 					drawBox(entity, 75, 0, 130, 2.0, 0.75, 2, ticks);
 				}
 			}
+		}
+	}
+	if (settings.getSetting("Dungeons", "Hide nametags of incorrect livids")) {
+		if (entity.getName().substr(0, 5) !== correctLividColorHP) {
+			cancel(e)
 		}
 	}
 	if (settings.getSetting("Performance", "Disable EVERYTHING render")) {
@@ -2121,7 +2124,7 @@ addCustomCompletion(soopyCommand, (args) => {
 });
 
 let joindungeonCommand = register("command", (...args, e) => {
-	ChatLib.say("/" + args.join(" "))
+	ChatLib.say("/joindungeon" + args.join(" "))
 }).setName("joindungeon")
 
 addCustomCompletion(joindungeonCommand, (args) => {

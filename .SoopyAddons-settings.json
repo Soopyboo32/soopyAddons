@@ -5,7 +5,7 @@
       {
         "type": "button",
         "name": "&6Soopy&7Addons",
-        "text": "&7Version v0.1.74",
+        "text": "&7Version v0.1.75",
         "method": "/Function(\n() => {\n}\n)/",
         "hidden": false
       },
@@ -35,6 +35,20 @@
         "name": "Credits",
         "text": "click",
         "method": "/Function(\n() => {\n    ChatLib.chat(\"&6Soopy&7Addons &7Credits\");\n    ChatLib.chat(\" &r- &6Phxntomexile &7: Beta tester and Lots of ideas\");\n    ChatLib.chat(\" &r- &6Agentlai &7: Beta tester\");\n    ChatLib.chat(\" &r- &6vNoxus &7: Ideas and bug testing\");\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "If you cannot see the tabs at the top of the settings",
+        "text": "click",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "Turn down ur gui scale (u can turn it back after)",
+        "text": "click",
+        "method": "/Function(\n() => {\n}\n)/",
         "hidden": false
       }
     ]
@@ -283,7 +297,7 @@
         "name": "Spirit Bear HP X",
         "value": 10,
         "min": 0,
-        "max": 960,
+        "max": 600,
         "round": 0,
         "hidden": false
       },
@@ -298,31 +312,13 @@
       },
       {
         "type": "toggle",
-        "name": "Show total midas staff dmg",
+        "name": "Show box around Spirit Bear and Spirit Bow and Correct Livid",
         "value": true,
         "hidden": false
       },
       {
-        "type": "slider",
-        "name": "Midas staff dmg X",
-        "value": 10,
-        "min": 0,
-        "max": 960,
-        "round": 0,
-        "hidden": false
-      },
-      {
-        "type": "slider",
-        "name": "Midas staff dmg Y",
-        "value": 40,
-        "min": 0,
-        "max": 600,
-        "round": 0,
-        "hidden": false
-      },
-      {
         "type": "toggle",
-        "name": "Show box around Spirit Bear and Spirit Bow and Correct Livid",
+        "name": "Hide nametags of incorrect livids",
         "value": true,
         "hidden": false
       },
@@ -370,7 +366,7 @@
       {
         "type": "toggle",
         "name": "Show current pet",
-        "value": true,
+        "value": false,
         "hidden": false
       },
       {
@@ -384,7 +380,7 @@
         "name": "Pet Display X",
         "value": 10,
         "min": 0,
-        "max": 960,
+        "max": 600,
         "round": 0,
         "hidden": false
       },
@@ -435,13 +431,13 @@
       {
         "type": "toggle",
         "name": "Show player's 'skill' next to their name in skyblock.",
-        "value": true,
+        "value": false,
         "hidden": false
       },
       {
         "type": "string_selector",
         "name": "What stat to use as 'skill'",
-        "value": 0,
+        "value": 1,
         "options": [
           "Skill Average",
           "Catacombs",
