@@ -261,6 +261,302 @@ let versionData = {
                 "- somewhere along the lines removed splash messages",
                 "*** hide close entities in splash now disabled by default"
             ]
+        },
+        {
+            version: "v0.1.76",
+            versionId: 34,
+            changeLog: [
+                "+ some sbg features"
+            ]
+        },
+        {
+            version: "v0.1.77",
+            versionId: 35,
+            changeLog: [
+                "+ some sbg features"
+            ]
+        },
+        {
+            version: "v0.1.78",
+            versionId: 36,
+            changeLog: [
+                "+ some sbg features"
+            ]
+        },
+        {
+            version: "v0.1.79",
+            versionId: 37,
+            changeLog: [
+                "+ Many bugfixes"
+            ]
+        },
+        {
+            version: "v0.1.80",
+            versionId: 38,
+            changeLog: [
+                "+ Some puzzle solvers"
+            ]
+        },
+        {
+            version: "v0.1.81",
+            versionId: 39,
+            changeLog: [
+                "+ Among us counting solver",
+                "+ Hopefully some fps boost when using renderentity event",
+                "+ You can now use draw box around ____ while having the renderentity event disabled"
+            ]
+        },
+        {
+            version: "v0.1.82",
+            versionId: 40,
+            changeLog: [
+                "- fixed among us counting solver"
+            ]
+        },
+        {
+            version: "v0.1.83",
+            versionId: 41,
+            changeLog: [
+                "- fps fix thing"
+            ]
+        },
+        {
+            version: "v0.1.84",
+            versionId: 42,
+            changeLog: [
+                "- Fixed among us solvers for people that it only renders 1 for (Hopefully)",
+                "- Improved ice puzzle solver's speed so it should load the solution to the 3rd puzzle",
+                "- Some random other bug fixes"
+            ]
+        },
+        {
+            version: "v0.1.84",
+            versionId: 42,
+            changeLog: [
+                "- Fixed among us solvers for people that it only renders 1 for (Hopefully)",
+                "- Improved ice puzzle solver's speed so it should load the solution to the 3rd puzzle",
+                "- Some random other bug fixes"
+            ]
+        },
+        {
+            version: "v0.1.85",
+            versionId: 43,
+            changeLog: [
+                "- Added support for skill level 60s",
+                "- Many other improvements."
+            ]
+        },
+        {
+            version: "v0.1.86",
+            versionId: 44,
+            changeLog: [
+                "- Completely revamped /soopy guild [guildname]",
+                "(its now a cool looking gui)"
+            ]
+        },
+        {
+            version: "v0.1.87",
+            versionId: 45,
+            changeLog: [
+                "- /guild is alias to /soopy guild now"
+            ]
+        },
+        {
+            version: "v0.1.88",
+            versionId: 46,
+            changeLog: [
+                "- bugfix with /guild"
+            ]
+        },
+        {
+            version: "v0.1.89",
+            versionId: 47,
+            changeLog: [
+                "- Added /dragalert [skill avg]",
+                "(gives you an alert if someone with a skill avg above the set value joins the lobby)"
+            ]
+        },
+        {
+            version: "v0.1.90",
+            versionId: 48,
+            changeLog: [
+                "- Added puzzler solver"
+            ]
+        },
+        {
+            version: "v0.1.91",
+            versionId: 49,
+            changeLog: [
+                "- Fixes crash"
+            ]
+        },
+        {
+            version: "v0.1.92",
+            versionId: 50,
+            changeLog: [
+                "- Puzzler solver fix"
+            ]
+        },
+        {
+            version: "v0.1.93",
+            versionId: 51,
+            changeLog: [
+                "- Puzzler solver fix v2"
+            ]
+        },
+        {
+            version: "v0.1.94",
+            versionId: 52,
+            changeLog: [
+                "- Puzzler solver fix v3"
+            ]
+        },
+        {
+            version: "v0.1.95",
+            versionId: 53,
+            changeLog: [
+                "- Puzzler solver crash fix"
+            ]
+        },
+        {
+            version: "v0.1.96",
+            versionId: 54,
+            changeLog: [
+                "- Guided sheep / explosive shot cooldown"
+            ]
+        },
+        {
+            version: "v0.1.97",
+            versionId: 55,
+            changeLog: [
+                "- Removed /reparty as it was buggy (might be added back later)"
+            ]
+        },
+        {
+            version: "v0.1.98",
+            versionId: 56,
+            changeLog: [
+                "- Added fletchur solver (probs wont be usefull untill they start looping)"
+            ]
+        },
+        {
+            version: "v0.1.99",
+            versionId: 57,
+            changeLog: [
+                "- Fixes"
+            ]
+        },
+        {
+            version: "v0.1.100",
+            versionId: 58,
+            changeLog: [
+                "- Added client-side terminal clicking"
+            ]
+        },
+        {
+            version: "v0.1.101",
+            versionId: 59,
+            changeLog: [
+                "- Added /soopy setkey [key] to set api key (so maby my server is less overloaded)"
+            ]
+        },
+        {
+            version: "v0.1.102",
+            versionId: 60,
+            changeLog: [
+                "- Many bug fixes and burrial display"
+            ]
+        },
+        {
+            version: "v0.1.103",
+            versionId: 61,
+            changeLog: [
+                "- fixes for api key and renaming settings"
+            ]
+        },
+        {
+            version: "v0.1.104",
+            versionId: 62,
+            changeLog: [
+                "- Made Queue terminal clicking off my default."
+            ]
+        },
+        {
+            version: "v0.1.105",
+            versionId: 63,
+            changeLog: [
+                "- Oops i broke queue terminal clicking in last version (fix)."
+            ]
+        },
+        {
+            version: "v0.1.106",
+            versionId: 64,
+            changeLog: [
+                "- Added way for me to debug what is causing lag."
+            ]
+        },
+        {
+            version: "v0.1.107",
+            versionId: 65,
+            changeLog: [
+                "- Added setting to disable alert to set hypixel api key."
+            ]
+        },
+        {
+            version: "v0.1.108",
+            versionId: 66,
+            changeLog: [
+                "- Fix some console spam."
+            ]
+        },
+        {
+            version: "v0.1.109",
+            versionId: 67,
+            changeLog: [
+                "- Fix queue terminal clicking setting not working."
+            ]
+        },
+        {
+            version: "v0.1.110",
+            versionId: 68,
+            changeLog: [
+                "- Fix queue terminal clicking setting not working. v2"
+            ]
+        },
+        {
+            version: "v0.1.111",
+            versionId: 69,
+            changeLog: [
+                "- Fix better terminal clicking not working for maze and correct all the panes while queue terminal clicking is on"
+            ]
+        },
+        {
+            version: "v0.1.112",
+            versionId: 70,
+            changeLog: [
+                "- Improvements to burrial display"
+            ]
+        },
+        {
+            version: "v0.1.113",
+            versionId: 71,
+            changeLog: [
+                "- Burrial display fix to people with profiles they havent joined"
+            ]
+        },
+        {
+            version: "v0.1.114",
+            versionId: 72,
+            changeLog: [
+                "- Wait i broke it more for some people (fix?)"
+            ]
+        },
+        {
+            version: "v0.1.115",
+            versionId: 73,
+            changeLog: [
+                "- Fixes a randomly occuring error for some people"
+            ]
         }
     ],
     installMessage: [
@@ -272,7 +568,7 @@ let versionData = {
     ],
     currVersion: "v" + JSON.parse(FileLib.read("soopyAddons", "metadata.json")).version
 }
-versionData.currVersionId = versionData.changeLog.length - 1
+versionData.currVersionId = versionData.changeLog[versionData.changeLog.length - 1].versionId
 
 
 

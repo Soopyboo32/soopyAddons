@@ -5,7 +5,7 @@
       {
         "type": "button",
         "name": "&6Soopy&7Addons",
-        "text": "&7Version v0.1.75",
+        "text": "&7Version v0.1.111",
         "method": "/Function(\n() => {\n}\n)/",
         "hidden": false
       },
@@ -34,20 +34,20 @@
         "type": "button",
         "name": "Credits",
         "text": "click",
-        "method": "/Function(\n() => {\n    ChatLib.chat(\"&6Soopy&7Addons &7Credits\");\n    ChatLib.chat(\" &r- &6Phxntomexile &7: Beta tester and Lots of ideas\");\n    ChatLib.chat(\" &r- &6Agentlai &7: Beta tester\");\n    ChatLib.chat(\" &r- &6vNoxus &7: Ideas and bug testing\");\n}\n)/",
+        "method": "/Function(\n() => {\n    ChatLib.chat(\"&6Soopy&7Addons &7Credits\");\n    ChatLib.chat(\" &r- &6Antonio32A &7: Code for drawing boxes around things\");\n    ChatLib.chat(\" &r- &6Phxntomexile &7: Beta tester and Lots of ideas\");\n    ChatLib.chat(\" &r- &6Agentlai &7: Beta tester\");\n    ChatLib.chat(\" &r- &6vNoxus &7: Ideas and bug testing\");\n}\n)/",
         "hidden": false
       },
       {
         "type": "button",
         "name": "If you cannot see the tabs at the top of the settings",
-        "text": "click",
+        "text": "",
         "method": "/Function(\n() => {\n}\n)/",
         "hidden": false
       },
       {
         "type": "button",
         "name": "Turn down ur gui scale (u can turn it back after)",
-        "text": "click",
+        "text": "",
         "method": "/Function(\n() => {\n}\n)/",
         "hidden": false
       }
@@ -148,59 +148,20 @@
       },
       {
         "type": "toggle",
-        "name": "Enable RenderEntity event",
+        "name": "Enable Tick event",
         "value": true,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Disable armour stands render",
-        "value": false,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Disable EVERYTHING render",
-        "value": false,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Enable armourstand render distance",
-        "value": true,
-        "hidden": false
-      },
-      {
-        "type": "slider",
-        "name": "Armourstand render distance",
-        "value": 30,
-        "min": 1,
-        "max": 100,
-        "round": 0,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Player render distance (Only if there is more than 25 players online)",
-        "value": true,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Hide close entity's during splash",
-        "value": false,
         "hidden": false
       },
       {
         "type": "toggle",
         "name": "Auto ct load suggestion message",
-        "value": true,
+        "value": false,
         "hidden": false
       },
       {
         "type": "toggle",
         "name": "Auto ct load",
-        "value": true,
+        "value": false,
         "hidden": false
       }
     ]
@@ -208,66 +169,6 @@
   {
     "name": "Dungeons",
     "settings": [
-      {
-        "type": "button",
-        "name": "",
-        "text": "This is the auto dungeons party finder kicker thing",
-        "method": "/Function(\n() => {\n}\n)/",
-        "hidden": false
-      },
-      {
-        "type": "button",
-        "name": "",
-        "text": "&7(it kicks people who join using party finder and dont meet reqs)",
-        "method": "/Function(\n() => {\n}\n)/",
-        "hidden": false
-      },
-      {
-        "type": "slider",
-        "name": "Minimum player class level to join",
-        "value": 0,
-        "min": 0,
-        "max": 50,
-        "round": 0,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Allow Healers to join the party",
-        "value": true,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Allow Mages to join the party",
-        "value": true,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Allow Tanks to join the party",
-        "value": true,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Allow Beserkers to join the party",
-        "value": true,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
-        "name": "Allow Archers to join the party",
-        "value": true,
-        "hidden": false
-      },
-      {
-        "type": "button",
-        "name": "",
-        "text": "Other dungeon settings",
-        "method": "/Function(\n() => {\n}\n)/",
-        "hidden": false
-      },
       {
         "type": "toggle",
         "name": "Watcher finished spawning mobs alert",
@@ -297,14 +198,14 @@
         "name": "Spirit Bear HP X",
         "value": 10,
         "min": 0,
-        "max": 600,
+        "max": 960,
         "round": 0,
         "hidden": false
       },
       {
         "type": "slider",
         "name": "Spirit Bear HP Y",
-        "value": 40,
+        "value": "88",
         "min": 0,
         "max": 600,
         "round": 0,
@@ -318,12 +219,6 @@
       },
       {
         "type": "toggle",
-        "name": "Hide nametags of incorrect livids",
-        "value": true,
-        "hidden": false
-      },
-      {
-        "type": "toggle",
         "name": "Show no armour message when entering a dungeon",
         "value": true,
         "hidden": false
@@ -331,12 +226,74 @@
       {
         "type": "toggle",
         "name": "Put a box around bats",
-        "value": true,
+        "value": false,
         "hidden": false
       },
       {
         "type": "toggle",
         "name": "Put a red box around skeleton masters",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "",
+        "text": "",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Auto-kick players that are able to join a f6 dungeon",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Auto-kick players that are able to join a f5 dungeon",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Ice Puzzle solver",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Among us solvers",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Better terminal clicking",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "",
+        "text": "&cWARNING: Queue terminal clicking may be bannable",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Queue terminal clicking",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Three associates solver",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Explosive shot timer / guided sheep",
         "value": true,
         "hidden": false
       }
@@ -349,6 +306,24 @@
         "type": "toggle",
         "name": "Show FPS and CPS",
         "value": true,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "FPS and CPS Display X",
+        "value": 10,
+        "min": 0,
+        "max": 960,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "FPS and CPS Display Y",
+        "value": "185",
+        "min": 0,
+        "max": 600,
+        "round": 0,
         "hidden": false
       },
       {
@@ -366,7 +341,7 @@
       {
         "type": "toggle",
         "name": "Show current pet",
-        "value": false,
+        "value": true,
         "hidden": false
       },
       {
@@ -380,17 +355,28 @@
         "name": "Pet Display X",
         "value": 10,
         "min": 0,
-        "max": 600,
+        "max": 960,
         "round": 0,
         "hidden": false
       },
       {
         "type": "slider",
         "name": "Pet Display Y",
-        "value": 30,
+        "value": "205",
         "min": 0,
         "max": 600,
         "round": 0,
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "Events",
+    "settings": [
+      {
+        "type": "toggle",
+        "name": "Griffin burrow waypoints",
+        "value": false,
         "hidden": false
       }
     ]
@@ -424,14 +410,14 @@
       },
       {
         "type": "toggle",
-        "name": "Show splash leach messages",
+        "name": "Puzzler solver",
         "value": true,
         "hidden": false
       },
       {
         "type": "toggle",
         "name": "Show player's 'skill' next to their name in skyblock.",
-        "value": false,
+        "value": true,
         "hidden": false
       },
       {
@@ -450,6 +436,12 @@
         "type": "toggle",
         "name": "Old Ability Messages",
         "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Disable set hypixel api key alert",
+        "value": false,
         "hidden": false
       }
     ]

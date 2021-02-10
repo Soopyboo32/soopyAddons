@@ -315,6 +315,8 @@ class Settings {
             hidden: {
                 version: "v" + JSON.parse(FileLib.read("soopyAddons", "metadata.json")).version,
                 versionId: -1,
+                "api-key": "undefined",
+                cakeData: {}
             }
         }
 
@@ -533,8 +535,11 @@ class Settings {
             }
         }
 
+        let oldSettingsData = null
 
-        var oldSettingsData = JSON.parse(FileLib.read("soopyAddonsData", "settings.json"));
+        try {
+            oldSettingsData = JSON.parse(FileLib.read("soopyAddonsData", "settings.json"));
+        } catch (e) { }
 
         this.loadSettings(oldSettingsData)
     }

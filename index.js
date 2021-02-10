@@ -9,21 +9,23 @@ module.exports = {};
 
 
 
-
-
 //import Promise from 'Promise';
 //import request from "request";
 // import numeral from 'numeraljs';
 // import sendRequest from "slothpixel/requests";
 import soopySettings from 'soopyAddons/settings.js';
 import versionData from 'soopyAddons/updateDetecter.js';
+//import bombDefuseSolver from 'soopyAddons/bombDefuse.js';
 //import grindDisplay from 'soopyAddons/currGrindDisplay.js';
 import { newSideMessage, setLocation } from "soopyApis";
 import { addCustomCompletion } from "CustomTabCompletions";
 const GlStateManager = Java.type("net.minecraft.client.renderer.GlStateManager");
 const GL11 = Java.type("org.lwjgl.opengl.GL11");
-const Time = Java.type("java.time");
+const Instant = Java.type("java.time.Instant");
 import nothing from 'soopyAddons/sbgBot/index.js';
+import nothing2 from 'soopyAddons/agentlai.js';
+import guildLbGuiManager from 'soopyAddons/guildLb.js';
+const ArmourStandClass = Java.type("net.minecraft.entity.item.EntityArmorStand")
 
 
 
@@ -39,6 +41,23 @@ register("worldLoad", () => {
 
 	doRamCheck()
 
+	if(soopySettings.getSetting("hidden", "api-key") === "undefined" && !settings.getSetting("Other","Disable set hypixel api key alert")){
+		ChatLib.chat("&c[SOOPYADDONS] You should set your hypixel api key with /soopy setkey [apikey]")
+	}else{
+		try{
+			let data = JSON.parse(FileLib.getUrlContent("https://api.hypixel.net/key?key=" + soopySettings.getSetting("hidden", "api-key")))
+			if(!data.success) {
+				soopySettings.setSetting("hidden", "api-key", "undefined")
+				soopySettings.saveSettings()
+				return;
+			}
+		}catch(e){
+			soopySettings.setSetting("hidden", "api-key", "undefined")
+			soopySettings.saveSettings()
+			return;
+		}
+	}
+   
 	if (!updateChecked) {
 		updateChecked = true
 
@@ -76,7 +95,7 @@ import { Setting, SettingsObject } from "../SettingsManager/SettingsManager";
 let versionDisplay = versionData.currVersion
 
 const settings = new SettingsObject(
-	"SoopyAddons", [{
+	"soopyAddons", [{
 		name: "Info",
 		settings: [
 			new Setting.Button("&6Soopy&7Addons", "&7Version " + versionDisplay, () => { }),
@@ -98,12 +117,13 @@ const settings = new SettingsObject(
 			}),
 			new Setting.Button("Credits", "click", () => {
 				ChatLib.chat("&6Soopy&7Addons &7Credits");
+				ChatLib.chat(" &r- &6Antonio32A &7: Code for drawing boxes around things");
 				ChatLib.chat(" &r- &6Phxntomexile &7: Beta tester and Lots of ideas");
 				ChatLib.chat(" &r- &6Agentlai &7: Beta tester");
 				ChatLib.chat(" &r- &6vNoxus &7: Ideas and bug testing");
 			}),
-			new Setting.Button("If you cannot see the tabs at the top of the settings", "click", () => { }),
-			new Setting.Button("Turn down ur gui scale (u can turn it back after)", "click", () => { })
+			new Setting.Button("If you cannot see the tabs at the top of the settings", "", () => { }),
+			new Setting.Button("Turn down ur gui scale (u can turn it back after)", "", () => { })
 		]
 	},
 	{
@@ -138,29 +158,14 @@ const settings = new SettingsObject(
 		name: "Performance",
 		settings: [
 			new Setting.Button("", "It is recomended to leave these values at default settings", () => { }),
-			new Setting.Toggle("Enable RenderEntity event", true),
-			new Setting.Toggle("Disable armour stands render", false),
-			new Setting.Toggle("Disable EVERYTHING render", false),
-			new Setting.Toggle("Enable armourstand render distance", true),
-			new Setting.Slider("Armourstand render distance", 30, 1, 100, 0),
-			new Setting.Toggle("Player render distance (Only if there is more than 25 players online)", true),
-			new Setting.Toggle("Hide close entity's during splash", false),
-			new Setting.Toggle("Auto ct load suggestion message", true),
-			new Setting.Toggle("Auto ct load", true)
+			new Setting.Toggle("Enable Tick event", true),
+			new Setting.Toggle("Auto ct load suggestion message", false),
+			new Setting.Toggle("Auto ct load", false)
 		]
 	},
 	{
 		name: "Dungeons",
 		settings: [
-			new Setting.Button("", "This is the auto dungeons party finder kicker thing", () => { }),
-			new Setting.Button("", "&7(it kicks people who join using party finder and dont meet reqs)", () => { }),
-			new Setting.Slider("Minimum player class level to join", 0, 0, 50, 0),
-			new Setting.Toggle("Allow Healers to join the party", true),
-			new Setting.Toggle("Allow Mages to join the party", true),
-			new Setting.Toggle("Allow Tanks to join the party", true),
-			new Setting.Toggle("Allow Beserkers to join the party", true),
-			new Setting.Toggle("Allow Archers to join the party", true),
-			new Setting.Button("", "Other dungeon settings", () => { }),
 			new Setting.Toggle("Watcher finished spawning mobs alert", true),
 			new Setting.Toggle("Dungeons 1m in alert", false),
 			new Setting.Toggle("Dungeons 80% in alert", false),
@@ -168,16 +173,28 @@ const settings = new SettingsObject(
 			new Setting.Slider("Spirit Bear HP X", 10, 0, Math.max(Renderer.screen.getWidth(), 600), 0),
 			new Setting.Slider("Spirit Bear HP Y", 40, 0, Math.max(Renderer.screen.getHeight(), 600), 0),
 			new Setting.Toggle("Show box around Spirit Bear and Spirit Bow and Correct Livid", true),
-			new Setting.Toggle("Hide nametags of incorrect livids", true),
 			new Setting.Toggle("Show no armour message when entering a dungeon", true),
-			new Setting.Toggle("Put a box around bats", true),
-			new Setting.Toggle("Put a red box around skeleton masters", true)
+			new Setting.Toggle("Put a box around bats", false),
+			new Setting.Toggle("Put a red box around skeleton masters", false),
+			new Setting.Button("", "", () => { }),
+			new Setting.Toggle("Auto-kick players that are able to join a f6 dungeon", false),
+			new Setting.Toggle("Auto-kick players that are able to join a f5 dungeon", false),
+			new Setting.Toggle("Ice Puzzle solver", true),
+			new Setting.Toggle("Among us solvers", true),
+			new Setting.Toggle("Better terminal clicking",true),
+			new Setting.Button("", "&cWARNING: Queue terminal clicking may be bannable", () => { }),
+			new Setting.Toggle("Queue terminal clicking",false),
+			new Setting.Toggle("Three associates solver",true),
+			//new Setting.Toggle("Bomb defuse solver",true),
+			new Setting.Toggle("Explosive shot timer / guided sheep",true)
 		]
 	},
 	{
 		name: "HUD",
 		settings: [
 			new Setting.Toggle("Show FPS and CPS", true),
+			new Setting.Slider("FPS and CPS Display X", 10, 0, Math.max(Renderer.screen.getWidth(), 600), 0),
+			new Setting.Slider("FPS and CPS Display Y", 10, 0, Math.max(Renderer.screen.getHeight(), 600), 0),
 			new Setting.Toggle("Show 'BOSS SLAIN' Message when you have a empty slayer quest", true),
 			new Setting.Toggle("Show 'BOSS SPAWNED' Message when you have spawned a slayer", true),
 			new Setting.Toggle("Show current pet", true),
@@ -187,13 +204,21 @@ const settings = new SettingsObject(
 		]
 	},
 	{
+		name: "Events",
+		settings: [
+			new Setting.Toggle("Griffin burrow waypoints", false)
+		]
+	},
+	{
 		name: "Other",
 		settings: [
 			new Setting.Toggle("Show SBG reminders as title", true),
 			new Setting.Toggle("Auto ty for SBG reminders", true),
 			new Setting.Toggle("Better guild messages", true),
 			new Setting.Toggle("Auto guild 'Welcome' for new members", true),
-			new Setting.Toggle("Show splash leach messages", true),
+			new Setting.Toggle("Puzzler solver", true),
+			//new Setting.Toggle("Item rarity halo", true),
+			//new Setting.Toggle("Item rarity halo as circle", true),
 			new Setting.Toggle("Show player's 'skill' next to their name in skyblock.", true),
 			new Setting.StringSelector("What stat to use as 'skill'", 0, [
 				"Skill Average",
@@ -201,7 +226,9 @@ const settings = new SettingsObject(
 				"Total Slayer",
 				"Soopy Skill"
 			]),
-			new Setting.Toggle("Old Ability Messages", true)
+			new Setting.Toggle("Old Ability Messages", true),
+			new Setting.Toggle("Disable set hypixel api key alert", false)//,
+			//new Setting.Toggle("No cake buff alert (Chat)", true)
 			//auto gg for guild QUEST
 			//message: &f&l                 GUILD QUEST TIER 1 COMPLETED!&r
 		]
@@ -219,6 +246,7 @@ function resetSettings() {
 }
 
 register("chat", (e) => {
+	
 	resetSettings();
 }).setChatCriteria("&r&cReset settings. &7(For SoopyAddons Chattriggers Module)&r")
 
@@ -251,6 +279,7 @@ let lastAbilityMsg = ""
 let lastAbilityTime = 0
 TriggerRegister.registerActionBar((mana, ability, e) => {
 	if (settings.getSetting("Other", "Old Ability Messages")) {
+		
 		cancel(e)
 		if (new Date().getTime() - lastAbilityTime > 1500 || lastAbilityMsg !== mana + ability) {
 			lastAbilityTime = new Date().getTime()
@@ -302,7 +331,10 @@ TriggerRegister.registerActionBar((mana, ability, secrets, e) => {
 
 // })
 
+//register("chat",()=>{}).setChatCriteria("&cYou are not in a party right now.&r")
+
 register("chat", (mvp, rank, e) => {
+	
 	if (!settings.getSetting("Other", "Show SBG reminders as title")) { return; }
 	Client.showTitle("", "&r&2Guild > " + mvp + " vNoxus " + rank + ": &rTHIS IS A HYDRATION REMINDER!", 20, 40, 20)
 	setTimeout(() => {
@@ -331,6 +363,7 @@ register("chat", (mvp, rank, e) => {
 }).setChatCriteria("&r&2Guild > ${mvp} vNoxus ${rank}: &rTHIS IS A HYDRATION REMINDER! Grab some water and take a sip. Please remember to stay hydrated!&r")
 
 register("chat", (mvp, rank, e) => {
+	
 	if (!settings.getSetting("Other", "Show SBG reminders as title")) { return; }
 	Client.showTitle("", "&r&2Guild > " + mvp + " Xilke " + rank + ": &r&fTHIS IS A NEW DARK AUCTION REMINDER!", 20, 40, 20)
 	setTimeout(() => {
@@ -359,6 +392,7 @@ register("chat", (mvp, rank, e) => {
 }).setChatCriteria("&r&2Guild > ${mvp} Xilke ${rank}: &r&fTHIS IS A NEW DARK AUCTION REMINDER! Grab some money and use them! #SBG ${*}")
 
 register("chat", (mvp, rank, e) => {
+	
 	if (!settings.getSetting("Other", "Show SBG reminders as title")) { return; }
 	Client.showTitle("", "&r&2Guild > " + mvp + " Xilke " + rank + ": &r&fTHIS IS A NEW HYDRATION REMINDER!", 20, 40, 20)
 	setTimeout(() => {
@@ -388,6 +422,7 @@ register("chat", (mvp, rank, e) => {
 
 
 register("chat", (rank, player, e) => {
+	
 	if (rank.toLowerCase().includes(">")) { return; }
 	if (!settings.getSetting("Other", "Auto guild 'Welcome' for new members")) { return; }
 	Client.showTitle("", rank + " " + player + "&r&e joined the guild!&r", 20, 40, 20)
@@ -412,6 +447,7 @@ register("chat", (rank, player, e) => {
 }).setChatCriteria("${rank} ${player} &r&ejoined the guild!&r")
 
 register("chat", (rank, player, kicker, e) => {
+	
 	if (rank.toLowerCase().includes(">")) { return; }
 	if (!settings.getSetting("Other", "Auto guild 'Welcome' for new members")) { return; }
 	Client.showTitle("", rank + " " + player + " &r&ewas kicked from the guild by " + kicker + "&r", 20, 40, 20)
@@ -436,6 +472,7 @@ register("chat", (rank, player, kicker, e) => {
 }).setChatCriteria("${rank} ${player} &r&ewas kicked from the guild by ${kicker}&r")
 
 register("chat", (player, e) => {
+	
 
 	new Thread(() => {
 		showPlayerStats(player)
@@ -445,6 +482,7 @@ register("chat", (player, e) => {
 
 
 register("chat", (player, e) => {
+	
 	if (!settings.getSetting("Other", "Auto guild 'Welcome' for new members")) { return; }
 	Client.showTitle("", "&7" + player + "&r&e joined the guild!&r", 20, 40, 20)
 
@@ -468,6 +506,7 @@ register("chat", (player, e) => {
 }).setChatCriteria("&7${player} &r&ejoined the guild!&r")
 
 register("chat", (e) => {
+	
 	if (!settings.getSetting("Dungeons", "Watcher finished spawning mobs alert")) { return; }
 	Client.showTitle("", "&cThe Watcher has finished spawning mobs!", 20, 40, 20)
 }).setChatCriteria("&r&c[BOSS] The Watcher&r&f: That will be enough for now.&r")
@@ -481,15 +520,26 @@ new Thread(() => {
 }).start()
 
 register("chat", (sender, player, message, e) => {
+	
 	if (!settings.getSetting("Other", "Better guild messages")) { return; }
 
 	sender = sender.replace(/(\[[MVIP&0123456789ABCDEFLMNOabcdeflmnor\+]+\])+? /g, "").replace(/\[[A-z]*\]/g, "").replace(/(&[0123456789ABCDEFLMNOabcdeflmnor])|\[|\]| |\+/g, "")
 	if (!botNames.includes(sender)) { return; }
 
 	cancel(e)
-	ChatLib.chat("&r&2SBGBOT > &r" + (player == Player.getName() ? "&6" : "&7") + player + (player == Player.getName() ? "&a" : "&7") + " -> " + (player == Player.getName() ? "&r" : "&7") + message)
+	ChatLib.chat("&r&2SBGBOT > &r" + ((player == Player.getName() || player == "everyone") ? "&6" : "&7") + player + ((player == Player.getName() || player == "everyone") ? "&a" : "&7") + " -> " + ((player == Player.getName() || player == "everyone") ? "&r" : "&7") + message)
 }).setChatCriteria("&r&2Guild > ${sender}&f: &r@${player}, ${message}&r")
 
+register("chat", (sender, message, e) => {
+	
+	if (!settings.getSetting("Other", "Better guild messages")) { return; }
+
+	sender = sender.replace(/(\[[MVIP&0123456789ABCDEFLMNOabcdeflmnor\+]+\])+? /g, "").replace(/\[[A-z]*\]/g, "").replace(/(&[0123456789ABCDEFLMNOabcdeflmnor])|\[|\]| |\+/g, "")
+	if (!botNames.includes(sender)) { return; }
+
+	cancel(e)
+	ChatLib.chat("&r&2SBGBOT &7[DM] &2> &r" + "&6" + Player.getName() + "&a" + " -> " + "&r" + message)
+}).setChatCriteria("&dFrom &r${sender}&r&7: &r&7@sbgbot ${message}&r")
 
 //Removed because it will lag ur game
 
@@ -522,7 +572,14 @@ let lastDungBelow80 = 0;
 let lastDungbelow1m = 0;
 let lastNoArmour = 0;
 
+let bossSlainMessage = false
+let bossSpawnedMessage = false
+let dungeon80 = null
+let dungeon1m = null
+let updatingIce = false
+
 function renderOverlay() {
+	startFunctionPerformanceAnalize("RenderOverlay event")
 	let now = new Date().getTime()
 
 	let timePassed = now - lastTimeRender
@@ -536,18 +593,9 @@ function renderOverlay() {
 
 	//grindDisplay.render(500, 500)
 
-	if (playersNearbye > 15 && settings.getSetting("Performance", "Hide close entity's during splash")) {
-		Renderer.scale(3, 3)
-		Renderer.drawString("&rSplash Detected &7(Hiding close entitys)", Renderer.screen.getWidth() / 3 / 2 - Renderer.getStringWidth("Splash Detected (Hiding close entitys)") / 2, Renderer.screen.getHeight() / 3 / 2 - 5)
-		if (hasParrot && !currPetIsParrot) {
-			Renderer.drawString("Dont forget Parrot", Renderer.screen.getWidth() / 2 - Renderer.getStringWidth("Dont forget Parrot") / 2, Renderer.screen.getHeight() / 2 + 20)
-		}
-		Renderer.scale(1, 1)
-	}
-
 	if (settings.getSetting("HUD", "Show FPS and CPS")) {
-		Renderer.drawString("&6FPS&7> &f" + (Math.round(fpsDis)), 10, 10);
-		Renderer.drawString("&6CPS&7> &f" + (CPS.getLeftClicksAverage() + CPS.getRightClicksAverage()), 10, 20);
+		Renderer.drawString("&6FPS&7> &f" + (settings.getSetting("Performance", "Enable Tick event")?(Math.round(fpsDis)) : Client.getFPS()), settings.getSetting("HUD","FPS and CPS Display X"), settings.getSetting("HUD","FPS and CPS Display Y"));
+		Renderer.drawString("&6CPS&7> &f" + (CPS.getLeftClicksAverage() + CPS.getRightClicksAverage()), settings.getSetting("HUD","FPS and CPS Display X"), parseInt(settings.getSetting("HUD","FPS and CPS Display Y"))+10);
 	}
 
 	if (settings.getSetting("HUD", "Show current pet")) {
@@ -588,10 +636,24 @@ function renderOverlay() {
 			Renderer.scale(1, 1)
 		}
 	}
+	if (settings.getSetting("Dungeons", "Explosive shot timer / guided sheep") && lastExplosiveShotTime !== -1 && inDungeons) {
+		Renderer.drawString(Math.max(0,Math.ceil((explosiveShotLength-(now-lastExplosiveShotTime))/1000)) + "s", Renderer.screen.getWidth() / 2 - Renderer.getStringWidth(Math.max(0,Math.ceil((explosiveShotLength-(now-lastExplosiveShotTime))/1000)) + "s") / 2, Renderer.screen.getHeight() / 2 + 10)
+	}
+
+	endFunctionPerformanceAnalize("RenderOverlay event")
 }
 
 
+//register("worldLoad", () => {
+	//if (settings.getSetting("Other", "No cake buff alert (Chat)")) {
+		//&r&d&lYum! &r&eYou gain &r&f+10✦ Speed &r&efor &r&a48 &r&ehours!&r
+		//&r&d&lYum! &r&eYou gain &r&c+2❁ Strength &r&efor &r&a48 &r&ehours!&r
+	//}
+//})
+
+
 register("chat", (e) => {
+	
 	if (Player.armor.getHelmet().getID() === -1
 		&& Player.armor.getChestplate().getID() === -1
 		&& Player.armor.getLeggings().getID() === -1
@@ -604,7 +666,11 @@ register("command", (arg, e) => {
 	if (arg === "dung") {
 		ChatLib.say("/warp dungeon_hub")
 	} else {
-		ChatLib.say("/warp " + arg)
+		if(arg === undefined){
+			ChatLib.command("warp")
+		}else{
+		ChatLib.command("warp " + arg)
+		}
 	}
 }).setName("warp")
 
@@ -626,14 +692,15 @@ register("command", (e) => {
 
 lastAttemptRePartyTime = 0
 
-register("command", (e) => {
-	ChatLib.say("/pl")
-	commandsQueue.push("")
-	commandsQueue.push("/p disband")
-	lastAttemptRePartyTime = new Date().getTime()
-}).setName("reparty")
+// register("command", (e) => {
+// 	ChatLib.say("/pl")
+// 	commandsQueue.push("")
+// 	commandsQueue.push("/p disband")
+// 	lastAttemptRePartyTime = new Date().getTime()
+// }).setName("reparty")
 
 register("chat", (mode, names, e) => {
+	
 
 
 	if (new Date().getTime() - lastAttemptRePartyTime > 1000) {
@@ -646,12 +713,12 @@ register("chat", (mode, names, e) => {
 	membsArr.pop()
 
 	membsArr.forEach((membNameFormatted) => {
-		let membNameUnFormatted = membNameFormatted.replace(/(\[[MVIP&0123456789ABCDEFLMNOabcdeflmnor\+]+\])+? /g, "").replace(/(&[0123456789ABCDEFLMNOabcdeflmnor])|\[|\]| |\+/g, "")
+		let membNameUnFormatted = membNameFormatted.replace(/(\[[a-zA-Z0-9\+]+\])+? /g, "").replace(/(&[0123456789ABCDEFLMNOabcdeflmnor])|\[|\]| |\+/g, "")
 		commandsQueue.push("/p invite " + membNameUnFormatted)
 	})
 }).setChatCriteria("Party ${mode}: ${names}")//&eParty Members: &r&6[MVP&r&2++&r&6] Soopyboo32&r&a ● &r&7ItzSirBeanie&r&a ● &r&a[VIP] 98falcon&r&a ● &r
 
-TriggerRegister.registerChat((color, e) => betterBreak(color, e, false)).setChatCriteria("${color}-----------------------------------------------------&r")
+TriggerRegister.registerChat((color, e) => betterBreak(color, e, false)).setChatCriteria("${color}-----------------------------------------------------&r").triggerIfCanceled(false)
 
 
 function betterBreak(color, e, overwhright) {
@@ -667,7 +734,7 @@ function betterBreak(color, e, overwhright) {
 }
 let fpsDis = 0;
 let worldTime = 0
-
+World.getBlockAt
 //Stuff for keybinds
 
 //var streamGameKeyBind = getKeyBindFromKey(Keyboard.KEY_NONE, "New game from stream Api nthinfgas");
@@ -693,24 +760,16 @@ let msPerFrameLast = 0;
 
 register("command", (e) => {
 	ChatLib.chat("----------------------")
-	ChatLib.chat("Nicked players in the lobby:")
-	Object.keys(playerSkills).forEach((key) => {
-		if (playerSkills[key].nick) {
-			if (getPlayerByUUID(key) !== null) {
-				if (getPlayerByUUID(key).getPing() !== -1) {
-
-					ChatLib.chat("&7" + getPlayerByUUID(key).getName())
-				}
-			}
-		}
-	})
-	ChatLib.chat("----------------------")
-}).setName("nicks")
-
-register("command", (e) => {
-	ChatLib.chat("----------------------")
 	ChatLib.chat("Lobby player Skill:")
-	Object.keys(playerSkills).sort((a, b) => { return playerSkills[a].skill - playerSkills[b].skill }).forEach((key) => {
+	let replaceThing = {
+		"Skill Average": "skill-avg",
+		"Catacombs": "dungeon",
+		"Total Slayer": "slayer-total",
+		"Soopy Skill": "skill"
+	}
+
+	let thing = replaceThing[settings.getSetting("Other", "What stat to use as 'skill'")]
+	Object.keys(playerSkills).sort((a, b) => { return playerSkills[a][thing] - playerSkills[b][thing] }).forEach((key) => {
 		if (getPlayerByUUID(key) !== null) {
 			if (getPlayerByUUID(key).getPing() !== -1) {
 
@@ -730,27 +789,11 @@ register("command", (e) => {
 				} else {
 					if (playerSkills[key].approx) {
 
-						let replaceThing = {
-							"Skill Average": "skill-avg",
-							"Catacombs": "dungeon",
-							"Total Slayer": "slayer-total",
-							"Soopy Skill": "skill"
-						}
-
-						let thing = replaceThing[settings.getSetting("Other", "What stat to use as 'skill'")]
 						let mess = new Message();
 						mess.addTextComponent(new TextComponent("&7" + player.getName() + " &c[" + (playerSkills[key]["usesSoopyaddons"] === true ? "&d⚝&c" : "") + playerSkills[key][thing] + "]").setHover("show_text", "&7Click to show more info for " + player.name).setClickAction("run_command").setClickValue("/soopy player " + player.name))
 						mess.chat()
 					} else {
 
-						let replaceThing = {
-							"Skill Average": "skill-avg",
-							"Catacombs": "dungeon",
-							"Total Slayer": "slayer-total",
-							"Soopy Skill": "skill"
-						}
-
-						let thing = replaceThing[settings.getSetting("Other", "What stat to use as 'skill'")]
 						let mess = new Message();
 						mess.addTextComponent(new TextComponent("&7" + player.getName() + " &2[" + (playerSkills[key]["usesSoopyaddons"] === true ? "&d⚝&2" : "") + playerSkills[key][thing] + "]").setHover("show_text", "&7Click to show more info for " + player.name).setClickAction("run_command").setClickValue("/soopy player " + player.name))
 						mess.chat()
@@ -823,8 +866,8 @@ function loadLobbyPlayerStats() {
 		new Thread(() => {
 
 			let players = World.getAllPlayers().sort((a, b) => {
-				let bDist = Math.sqrt(Math.pow(b.getX() - Player.getX(), 2) + Math.pow(b.getY() - Player.getY(), 2) + Math.pow(b.getZ() - Player.getZ(), 2))
-				let aDist = Math.sqrt(Math.pow(a.getX() - Player.getX(), 2) + Math.pow(a.getY() - Player.getY(), 2) + Math.pow(a.getZ() - Player.getZ(), 2))
+				let bDist = Math.pow(b.getX() - Player.getX(), 2) + Math.pow(b.getY() - Player.getY(), 2) + Math.pow(b.getZ() - Player.getZ(), 2)
+				let aDist =Math.pow(a.getX() - Player.getX(), 2) + Math.pow(a.getY() - Player.getY(), 2) + Math.pow(a.getZ() - Player.getZ(), 2)
 				return aDist - bDist
 			})
 
@@ -904,18 +947,33 @@ new Thread(() => {
 	return;
 }).start()
 
+let dragalert = -1
+
+register("command",(...args)=>{
+	if(args[0] === undefined){
+		args[0] = "43"
+	}
+
+	ChatLib.chat("Alerting you if someone above skill avg " + args[0] + " joins the lobby!")
+	ChatLib.chat("Set to -1 to disable")
+
+	dragalert = parseFloat(args[0])
+}).setName("dragalert")
+
 function loadDataFor(uuid) {
 
 	try {
 
 		if (getPlayerByUUID(uuid) == null) { return false; }
 
-		let response = JSON.parse(FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/getPlayerSkill.json?key=lkRFxoMYwrkgovPRn2zt&uuid=" + uuid))
+		let player = getPlayerByUUID(uuid)
 
+		let response = JSON.parse(FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/getPlayerSkill.json?key=lkRFxoMYwrkgovPRn2zt&uuid=" + uuid))
+		//console.log(JSON.stringify(response))
 		if (response.success === false) {
 			if (uuid === Player.getUUID().toString().replace(/-/ig, "")) { return !!response.cooldown; }
-			if (response.reason === "You have send to many requests in the past minute, wait a minute and try again") { return !!response.cooldown; }
-			if (response.reason === "The api is curranatly overloaded! Please try again in a few minutes") { return !!response.cooldown; } //add catch for server overload
+			if (response.reason === "You have send to many requests in the past minute, wait a minute and try again") { return true; }
+			if (response.reason === "The api is curranatly overloaded! Please try again in a few minutes") { return true; } //add catch for server overload
 			if (response.reason === "That player Doesent exist") {
 
 				playerSkills[uuid] = { error: true, nick: true }
@@ -928,18 +986,23 @@ function loadDataFor(uuid) {
 
 		playerSkills[uuid] = { error: false, "skill": response.skill, "approx": response.approx, "slayer-total": response["slayer-total"], "skill-avg": response["skill-avg"], "dungeon": response["dungeon"], "usesSoopyaddons": response["usesSoopyaddons"] }
 
+		if(dragalert !== -1){
+			if(response["skill-avg"] > dragalert){
+				Client.showTitle("&cWarning!","&d" + player.getName() + " has a skill avg of " + response["skill-avg"].toFixed(2),20,60,20)
+			}
+		}
+
 		return !!response.cooldown;
 	} catch (e) { console.log(e); return false }
 }
 
 let hideMessages = [
-	"&r${*}&r&6 joined the lobby!&r",
-	"&r &b>&c>&a>&r &r${*} joined the lobby!&r &a<&c<&b<&r",
+	"&r${*}&r&6 ${*} the lobby!&r",
+	"&r &b>&c>&a>&r &r${*} the lobby!&r &a<&c<&b<&r",
 	"${*} &r&ffound a &r${*} &r&bMystery Box&r&f!&r",
 	"&b[Mystery Box] ${*} &ffound a ${*}&r",
 	"&r&7Warping you to the ${*} island...&r",
-	"&7Sending to server ${*}...&r",
-	"&aYou are playing on profile: ${*}&r"
+	"&7Sending to server ${*}...&r"
 ]
 let moveMessages = [
 	"${*} > ${*} &r&eleft.&r",
@@ -979,13 +1042,13 @@ let moveMessages = [
 	"&r&6&lRARE DROP! &r${*}&r",
 	"&r&cThis is a test message. &7(For SoopyAddons Chattriggers Module)&r",
 	"&r&cThis ability is disabled while guesting!&r",
-	"&e[NPC] &bMort&f: &rTalk to me to change your class and ready up.&r",
+	"&r&e[NPC]&bMort&f: &rTalk to me to change your class and ready up.&r",
 	"${*} is now ready!&r",
 	"${*} selected the ${*} &r&aDungeon Class!&r",
 	"&r&aDungeon starts in ${*} seconds.&r",
-	"&e[NPC] &bMort&f: &rHere, I found this map when I first entered the dungeon.&r",
-	"&e[NPC] &bMort&f: &rYou should find it useful if you get lost.&r",
-	"&e[NPC] &bMort&f: &rGood luck.&r",
+	"&r&e[NPC]&bMort&f: &rHere, I found this map when I first entered the dungeon.&r",
+	"&r&e[NPC]&bMort&f: &rYou should find it useful if you get lost.&r",
+	"&r&e[NPC]&bMort&f: &rGood luck.&r",
 	"&r&c ? ${*} was killed by ${*} and became a ghost&r&7.&r",
 	"${*} is ready to use! Press &r&6&lDROP&r&a to activate it!&r",
 	"&r&a ? ${*} was revived by ${*}!&r",
@@ -996,7 +1059,7 @@ let moveMessages = [
 	"&r&cThis ability is currently on cooldown for ${*} more second.&r",
 	"&r${*} &r&epicked up ${*}",
 	"&r&e&lRIGHT CLICK &r&7on &r&7a ${*} to open it. This key can only be used to open &r&a1&r&7 door!&r",
-	"&r&6&lDUNGEON BUFF! ${*} found a ${*}&r",
+	"&r&6&lDUNGEON BUFF! ${*} found ${*}&r",
 	"&r     &r&7Granted you ${*}.&r",
 	"&r&cLost Adventurer &r&aused &r${*}&r&aon you!&r",
 	"&r&cYou can only use this ability while in a dungeon!&r",
@@ -1004,12 +1067,9 @@ let moveMessages = [
 	"&r&4[BOSS] Necron&r&c: ${*}&r",
 	"&r${*} found a &r&dWither Essence&r&f! Everyone gains an extra essence!&r",
 	"&r&cYou cannot use abilities in this room!&r",
-	"&r&7Your Bat Staff hit &r&c${*} &r&7enemy${*} for &r&c${*} &r&7damage.&r",
 	"&r&c[BOSS] Thorn&r&f:${*}&r",
 	"&r&c[BOSS] The Watcher&r&f:${*}&r",
 	"&r&b[CROWD] ${*}&r",
-	"&r&7Your Bat Staff hit &r&c${*} &r&7enemy for &r&c${*} &r&7damage.&r",
-	"&r&7Your Bat Staff hit &r&c${*} &r&7enemies for &r&c${*} &r&7damage.&r",
 	"&r&6Guided Sheep &r&ais now available!&r",
 	"&r&7Your Guided Sheep hit &r&c${*} &r&7enemies for &r&c${*} &r&7damage.&r",
 	"&r&7Your Guided Sheep hit &r&c1 &r&7enemy for &r&c${*} &r&7damage.&r",
@@ -1017,7 +1077,11 @@ let moveMessages = [
 	"&r&7The &r&9Spirit Chicken&r&7's lightning struck you for &r&c${*}&r&7 damage.&r",
 	"&r&7A &r&9Chicken Mine&r&7 exploded, hitting you for &r&c${*}&r&7 damage.&r",
 	"&r&7A &r&9Spirit Sheep&r&7 exploded, hitting you for &r&c${*}&r&7 damage.&r",
-	"&r&7Your Molten Wave hit &r&c${*} &r&7enem${*} for &r&c${*} &r&7damage.&r"
+	"&r&7Your ${*} hit &r&c${*} &r&7enem${*} for &r&c${*} &r&7damage.&r",
+	"&r${*} Milestone &r${*}&r&7: You have ${*}&r",
+	"&r&cThis ability is on cooldown for ${*}s.&r",
+	"&r&cYou already ate this cake recently!&r",
+	"&r&a&lYou healed ${*} player${*} for ${*} health!&r"
 ]
 
 let userEdits = FileLib.read("soopyAddonsData", "messagesDontEdit.json");
@@ -1026,6 +1090,7 @@ userEdits = JSON.parse(userEdits)
 
 hideMessages.forEach((message) => {
 	register("chat", (e) => {
+		
 		if (userEdits.includes(message)) {
 			return;
 		}
@@ -1235,60 +1300,6 @@ let commandsQueue = []
 
 let commandsQueueLastTime = new Date().getTime()
 
-
-
-function playerJoinDungeonParty(player, playerClass, level) {
-
-	playerClass = playerClass.toLowerCase()
-
-	let levelNum = parseInt(level)
-
-	if (isNaN(levelNum)) {
-		ChatLib.chat("&cAn Error Occured")
-		return;
-	}
-
-	if (player.slice(0, 1) === "&") {
-		player = player.slice(2)
-	}
-
-	if (levelNum < settings.getSetting("Dungeons", "Minimum player class level to join")) {
-		pKickPlayers.push(player)
-		ChatLib.chat("&cKicking " + player + " from the party because they are only level " + level)
-		return;
-	}
-
-	let playerAllowedClass = false
-
-	if (playerClass.includes("healer") && settings.getSetting("Dungeons", "Allow Healers to join the party")) {
-		playerAllowedClass = true;
-	}
-
-	if (playerClass.includes("mage") && settings.getSetting("Dungeons", "Allow Mages to join the party")) {
-		playerAllowedClass = true;
-	}
-
-	if (playerClass.includes("tank") && settings.getSetting("Dungeons", "Allow Tanks to join the party")) {
-		playerAllowedClass = true;
-	}
-
-	if (playerClass.includes("berserk") && settings.getSetting("Dungeons", "Allow Beserkers to join the party")) {
-		playerAllowedClass = true;
-	}
-
-	if (playerClass.includes("archer") && settings.getSetting("Dungeons", "Allow Archers to join the party")) {
-		playerAllowedClass = true;
-	}
-
-	if (!playerAllowedClass) {
-		commandsQueue.push("/p kick" + player)
-		ChatLib.chat("&cKicking " + player + " from the party because they are class " + playerClass)
-
-	}
-}
-
-TriggerRegister.registerChat((name, playerClass, level) => { playerJoinDungeonParty(name, playerClass, level) }).setChatCriteria("&dDungeon Finder &r&f> &r${name} &r&ejoined the dungeon group! (&r${playerClass} Level ${level}&r&e)&r")
-
 let lastRender = new Date().getTime();
 
 let correctLividColor = undefined
@@ -1307,46 +1318,426 @@ let lividColor = {
 	"Arcade": "&e"
 }
 
-register("renderWorld", () => {
-	let time = new Date().getTime() + (Time.Instant.now().getNano() / 1000000000);
+let gameOpened = new Date().getTime()
+
+register("renderWorld", (ticks) => {
+	
+	startFunctionPerformanceAnalize("Main renderworld event")
+	let time = new Date().getTime() + (Instant.now().getNano() / 1000000000);
 	msPerFrameLast = time - lastRender
 	lastRender = time
-})
+	let timeSinceGameOpened = time - gameOpened
+	if (iceData.render && settings.getSetting("Dungeons", "Ice Puzzle solver")) {
 
-let playersInWorld = 0
+		let x = iceData.playerX
+		let y = iceData.playerY
+		let z = iceData.playerZ
+		let i = 1;
+		let lastPos = [x + 0.5, y + 0.1, z + 0.5]
+		let lastPos2 = [x + 0.5, y + 0.1, z + 0.5]
+		let renderI = 0;
+		iceData.solution.forEach((solMov) => {
+			i++
+			let loops = 4
+			
+			for (let o = 0; o < loops;o+= 1) {
 
-let bossSlainMessage = false
-let bossSpawnedMessage = false
-let dungeon80 = null
-let dungeon1m = null
+				timeSinceGameOpened -= 25
 
-let tickEvent = register("tick", () => {
-	let now = new Date().getTime()
-	if (settings.getSetting("Performance", "Enable RenderEntity event") !== renderEntityEventEnabled) {
-		if (renderEntityEventEnabled) {
-			renderEntity.unregister()
-			renderEntityEventEnabled = !renderEntityEventEnabled
-		} else {
-			renderEntity.register()
-			renderEntityEventEnabled = !renderEntityEventEnabled
-		}
+				if (solMov == 0) {
+					x += (1 / loops)
+				}
+				if (solMov == 1) {
+					x -= (1 / loops)
+				}
+				if (solMov == 2) {
+					z += (1 / loops)
+				}
+				if (solMov == 3) {
+					z -= (1 / loops)
+				}
+
+				let positions = [
+					lastPos2[0],
+					lastPos2[1],
+					lastPos2[2],
+					lastPos[0],
+					lastPos[1],
+					lastPos[2],
+					x + 0.5,
+					y + 0.1,
+					z + 0.5
+				]
+
+				if(renderI%2===0){
+					drawCurve(...positions, timeSinceGameOpened)
+				}
+
+				lastPos2 = [...lastPos]
+				lastPos = [x + 0.5, y + 0.1, z + 0.5]
+				renderI++
+			}
+		})
 	}
 
+	
 
+	boxes.forEach((render) => {
+		drawBoxAtEntity(...render, ticks)
+	})
+
+	
+	if (settings.getSetting("Other", "Puzzler solver")) {
+		if(puzzleLocaion !== undefined){
+			drawBoxAtBlock(...puzzleLocaion, 0, 255, 0)
+		}
+	}
+	if (settings.getSetting("Dungeons", "Three associates solver")) {
+		if(threemanLoc !== undefined){
+			drawBoxAtBlock(...threemanLoc, 0, 0, 255)
+		}
+	}
+	// if (settings.getSetting("Dungeons", "Bomb defuse solver")) {
+	// 	bombDefuseSolver.render()
+	// }
+	
+	if(settings.getSetting("Events","Griffin burrow waypoints")){
+		let sorted = burrialData.locations.sort((a,b)=>{
+			let aDist = calculateDistance([Player.getX(),Player.getY(),Player.getZ()],[a.x+0.5,a.y+2.5,a.z+0.5])
+			let bDist = calculateDistance([Player.getX(),Player.getY(),Player.getZ()],[b.x+0.5,b.y+2.5,b.z+0.5])
+
+			return bDist-aDist
+		})
+		let nearestI = 0
+		sorted.forEach((loc, i)=>{
+			if(!loc.clicked){
+				if(nearestI < i){
+					nearestI = i
+				}
+			}
+		})
+		sorted.forEach((loc,i)=>{
+			let nearest = i===nearestI
+
+			let typeReplace = [
+				"Start",
+				"Mob",
+				"Treasure",
+				"Finish",
+				"Other3"
+			]
+			if(!loc.clicked){
+				drawBoxAtBlock(loc.x, loc.y,loc.z,0,255,0)
+			}
+			Tessellator.drawString(
+				"(" + (loc.chain+1) + "/4) " + typeReplace[loc.type] + " BURRIAL (" + Math.round(calculateDistance([Player.getX(),Player.getY(),Player.getZ()],[loc.x+0.5,loc.y+2.5,loc.z+0.5])) + "m)",
+				loc.x+0.5,
+				loc.y+1.5,
+				loc.z+0.5,
+				loc.clicked? 65280:(nearest?16711680:6579300), true, loc.clicked? 0.04:(nearest?1:0.5), !loc.clicked
+			);
+		})
+	}
+
+	endFunctionPerformanceAnalize("Main renderworld event")
+})
+
+/* accepts parameters
+ * h  Object = {h:x, s:y, v:z}
+ * OR
+ * h, s, v
+*/
+function HSVtoRGB(h, s, v) {
+	var r, g, b, i, f, p, q, t;
+	if (arguments.length === 1) {
+		s = h.s, v = h.v, h = h.h;
+	}
+	i = Math.floor(h * 6);
+	f = h * 6 - i;
+	p = v * (1 - s);
+	q = v * (1 - f * s);
+	t = v * (1 - (1 - f) * s);
+	switch (i % 6) {
+		case 0: r = v, g = t, b = p; break;
+		case 1: r = q, g = v, b = p; break;
+		case 2: r = p, g = v, b = t; break;
+		case 3: r = p, g = q, b = v; break;
+		case 4: r = t, g = p, b = v; break;
+		case 5: r = v, g = p, b = q; break;
+	}
+	return {
+		r: r * 255,
+		g: g * 255,
+		b: b * 255
+	};
+}
+
+function drawLine(x, y, z, x2, y2, z2, r, g, b) {
+
+	GL11.glBlendFunc(770, 771);
+	GL11.glEnable(GL11.GL_BLEND);
+	GL11.glLineWidth(1);
+	GL11.glDisable(GL11.GL_TEXTURE_2D);
+	GL11.glDisable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(false);
+	GlStateManager.func_179094_E();
+
+	Tessellator.begin(3).colorize(r, g, b);
+
+	Tessellator.pos(x, y, z).tex(0, 0);
+	Tessellator.pos(x2, y2, z2).tex(0, 0);
+
+	Tessellator.draw();
+
+
+	GlStateManager.func_179121_F();
+	GL11.glEnable(GL11.GL_TEXTURE_2D);
+	GL11.glEnable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(true);
+	GL11.glDisable(GL11.GL_BLEND);
+}
+function drawLineSmall(x, y, z, x2, y2, z2, r, g, b) {
+
+	Tessellator.begin(3).colorize(r, g, b);
+
+	Tessellator.pos(x, y, z).tex(0, 0);
+	Tessellator.pos(x2, y2, z2).tex(0, 0);
+
+	Tessellator.draw();
+}
+
+function pointBetween(one, two, progress) {
+	return one + ((two-one) * progress)
+}
+
+function drawCurve(x, y, z, x2, y2, z2, x3, y3, z3, timeSinceGameOpened) {
+
+	let oneLine = false
+	if(x===x2 && x===x3){
+		oneLine = true
+	}
+	if(z===z2 && z===z3){
+		oneLine = true
+	}
+
+	if(oneLine){
+		GL11.glBlendFunc(770, 771);
+		GL11.glEnable(GL11.GL_BLEND);
+		GL11.glLineWidth(2);
+		GL11.glDisable(GL11.GL_TEXTURE_2D);
+		GL11.glDisable(GL11.GL_DEPTH_TEST);
+		GL11.glDepthMask(false);
+		GlStateManager.func_179094_E();
+
+		let cromaSpinBase = (timeSinceGameOpened / 5) % 360
+		let color = HSVtoRGB(cromaSpinBase / 360, 0.78, 0.92)
+		drawLineSmall(x,y,z,pointBetween(x,x2,0.5),pointBetween(y,y2,0.5),pointBetween(z,z2,0.5),color.r / 255, color.g / 255, color.b / 255)
+		timeSinceGameOpened+=25/4
+		cromaSpinBase = (timeSinceGameOpened / 5) % 360
+		color = HSVtoRGB(cromaSpinBase / 360, 0.78, 0.92)
+		drawLineSmall(pointBetween(x,x2,0.5),pointBetween(y,y2,0.5),pointBetween(z,z2,0.5),x2,y2,z2,color.r / 255, color.g / 255, color.b / 255)
+		timeSinceGameOpened+=25/4
+		cromaSpinBase = (timeSinceGameOpened / 5) % 360
+		color = HSVtoRGB(cromaSpinBase / 360, 0.78, 0.92)
+		drawLineSmall(x2,y2,z2,pointBetween(x2,x3,0.5),pointBetween(y2,y3,0.5),pointBetween(z2,z3,0.5),color.r / 255, color.g / 255, color.b / 255)
+		timeSinceGameOpened+=25/4
+		cromaSpinBase = (timeSinceGameOpened / 5) % 360
+		color = HSVtoRGB(cromaSpinBase / 360, 0.78, 0.92)
+		drawLineSmall(pointBetween(x2,x3,0.5),pointBetween(y2,y3,0.5),pointBetween(z2,z3,0.5),x3,y3,z3,color.r / 255, color.g / 255, color.b / 255)
+		
+		GlStateManager.func_179121_F();
+		GL11.glEnable(GL11.GL_TEXTURE_2D);
+		GL11.glEnable(GL11.GL_DEPTH_TEST);
+		GL11.glDepthMask(true);
+		GL11.glDisable(GL11.GL_BLEND);
+		return;
+	}
+
+	GL11.glBlendFunc(770, 771);
+	GL11.glEnable(GL11.GL_BLEND);
+	GL11.glLineWidth(2);
+	GL11.glDisable(GL11.GL_TEXTURE_2D);
+	GL11.glDisable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(false);
+	GlStateManager.func_179094_E();
+
+	let lastPos = [x, y, z]
+
+	let loops = 10
+
+	for (let i = 0; i < loops; i++) {
+
+		let lineOnePositions = [
+			pointBetween(x, x2, i / loops),
+			pointBetween(y, y2, i / loops),
+			pointBetween(z, z2, i / loops)
+		]
+		let lineTwoPositions = [
+			pointBetween(x2, x3, i / loops),
+			pointBetween(y2, y3, i / loops),
+			pointBetween(z2, z3, i / loops)
+		]
+
+		let thisPos = [
+			pointBetween(lineOnePositions[0], lineTwoPositions[0], i / loops),
+			pointBetween(lineOnePositions[1], lineTwoPositions[1], i / loops),
+			pointBetween(lineOnePositions[2], lineTwoPositions[2], i / loops)
+		]
+		
+		timeSinceGameOpened -= 25/loops
+		let cromaSpinBase = (timeSinceGameOpened / 5) % 360
+		let color = HSVtoRGB(cromaSpinBase / 360, 0.78, 0.92)
+
+		drawLineSmall(...lastPos, ...thisPos, color.r / 255, color.g / 255, color.b / 255)
+
+		lastPos = thisPos
+	}
+
+	timeSinceGameOpened -= 50/loops
+	let cromaSpinBase = (timeSinceGameOpened / 5) % 360
+	let color = HSVtoRGB(cromaSpinBase / 360, 0.78, 0.92)
+
+	drawLineSmall(...lastPos, x3,y3,z3, color.r / 255, color.g / 255, color.b / 255)
+
+	GlStateManager.func_179121_F();
+	GL11.glEnable(GL11.GL_TEXTURE_2D);
+	GL11.glEnable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(true);
+	GL11.glDisable(GL11.GL_BLEND);
+}
+
+
+
+let iceData = {}
+let iceSolveCache = {}
+let itemsHighlight = []
+let itemsHighlight2 = []
+
+let lastTickEvent = true
+let lastMsTickTime = 0
+let lastTickEventTime = 0
+
+let lastTickEventEpochTimestamp = 0
+
+register("tick", () => {
+	
+	startFunctionPerformanceAnalize("Main tick event")
+
+	let now = new Date().getTime()
+
+	if(now-lastTickEventEpochTimestamp < 1000/10){
+		return;
+	}
+	lastTickEventEpochTimestamp = now
+
+	setLocation(settings.getSetting("Spam hider", "What corner of the screen?"),
+		settings.getSetting("Spam hider", "ADVANCED: x Offset"),
+		settings.getSetting("Spam hider", "ADVANCED: y Offset"))
+
+	if (!settings.getSetting("Performance", "Enable Tick event")) { 
+		if(lastTickEvent){
+			lastTickEvent = false;
+			ChatLib.chat("&cWARNING: TICK EVENT IS DISABLED, IT NEEDS TO BE ENABLED FOR MOST OF THE FEATURES TO WORK!")
+		}
+		return; 
+	}else{
+		if(!lastTickEvent){
+			lastTickEvent = true;
+		}
+	}
+	
+	itemsHighlight = []
+	itemsHighlight2 = []
+	if (Player.getOpenedInventory() !== null && settings.getSetting("Dungeons", "Among us solvers")) {
+		if (ChatLib.removeFormatting(Player.getOpenedInventory().getName()).startsWith("What starts with: '") && ChatLib.removeFormatting(Player.getOpenedInventory().getName()).endsWith("'?")) {
+			let letter = ChatLib.removeFormatting(Player.getOpenedInventory().getName()).substr(19, 1).toLowerCase()
+			let i = 0;
+			Player.getOpenedInventory().getItems().forEach((item) => {
+				if (ChatLib.removeFormatting(item.getName()).toLowerCase().startsWith(letter) && !item.isEnchanted()) {
+					itemsHighlight.push(i)
+				}
+				i++
+			})
+		}
+		if (ChatLib.removeFormatting(Player.getOpenedInventory().getName()).startsWith("Select all the ") && ChatLib.removeFormatting(Player.getOpenedInventory().getName()).endsWith(" items!")) {
+			let color = ChatLib.removeFormatting(Player.getOpenedInventory().getName()).substr(15).replace(" items!", "").toLowerCase()
+			let i = 0;//silver -> light grey die, white -> wool--
+			Player.getOpenedInventory().getItems().forEach((item) => {
+				if (ChatLib.removeFormatting(item.getName()).toLowerCase().replace("light grey die", "silver light grey die").replace("wool", "white wool").includes(color) && !item.isEnchanted()) {
+					itemsHighlight.push(i)
+				}
+				i++
+			})
+		}
+		if (ChatLib.removeFormatting(Player.getOpenedInventory().getName()) === "Click in order!") {
+			let i = 0;//silver -> light grey die, white -> wool--
+			let number = 100;
+			Player.getOpenedInventory().getItems().forEach((item,i) => {
+				if([...clickQueue,clickQueueDone].includes(i)){return;}
+				if (parseInt(ChatLib.removeFormatting(item.getName())) < number && item.getMetadata() === 14) {
+					number = parseInt(ChatLib.removeFormatting(item.getName()))
+				}
+				i++
+			})
+			i = 0
+			Player.getOpenedInventory().getItems().forEach((item) => {
+				if (parseInt(ChatLib.removeFormatting(item.getName())) === number) {
+					itemsHighlight.push(i)
+				}
+				i++
+			})
+			i = 0
+			Player.getOpenedInventory().getItems().forEach((item) => {
+				if (parseInt(ChatLib.removeFormatting(item.getName())) === number + 1) {
+					itemsHighlight2.push(i)
+				}
+				i++
+			})
+		}
+	}
+	
+
+	//fps
+
+	fpsDis = (fpsDis || 0) + ((1 / (msPerFrameLast / 1000)) - (fpsDis || 0)) / 50
+
+	if(lastMsTickTime>5 && now-lastTickEventTime < 1000){
+		return;
+	}
+
+	lastTickEventTime = now
+	let startTime = new Date().getTime()
 
 	spiritBearName = null
 
+	let boxesnew = []
+
 	World.getAllEntities().forEach((entity) => {
-		if (entity.getName().includes("Spirit Bow")) {
+		let entityName = entity.getName()
+		if (entityName === Player.getName()) {
+			return;
+		}
+		if (entityName === "Sheep") {
+			if((Player.getX()-entity.getX() < 4 || Player.getX()-entity.getX() > -4)
+			&& (Player.getY()-entity.getY() < 4 || Player.getY()-entity.getY() > -4)
+			&& (Player.getZ()-entity.getZ() < 4 || Player.getZ()-entity.getZ() > -4))
+			if(playerDungeonLevels?.selectedClass || "" === "mage" && Math.max(0,(explosiveShotLength-(now-lastExplosiveShotTime))) < 5 && entity.getEntity().func_70104_M()){
+				lastExplosiveShotTime = new Date().getTime()
+
+				explosiveShotLength = 30000*(lastMageCooldown || 1-((Math.floor((playerDungeonLevels?.mage + 50 || 50)/2))/100))
+			}
+			return;
+		}
+		if (entityName.includes("Spirit Bow")) {
 			spiritBearName = "&d&lBow Dropped!"
 			return;
 		}
-		if (entity.getName().includes("Spirit Bear") && entity.getName().includes("❤")) {
-			spiritBearName = entity.getName()
+		if (entityName.includes("Spirit Bear") && entityName.includes("❤")) {
+			spiritBearName = entityName
 			return;
 		}
-		if (/(?:Vendetta|Crossed|Hockey|Doctor|Frog|Smile|Scream|Purple|Arcade) Livid/g.test(entity.getName())) {
-			let lividName = entity.getName().replace(" Livid", "")
+		if (/(?:Vendetta|Crossed|Hockey|Doctor|Frog|Smile|Scream|Purple|Arcade) Livid/g.test(entityName)) {
+			let lividName = entityName.replace(" Livid", "")
 
 			if (!sayLividColors2.includes(lividName)) {
 				sayLividColors2.push(lividName)
@@ -1361,35 +1752,63 @@ let tickEvent = register("tick", () => {
 			}
 			return;
 		}
-		if (entity.getName().includes("Livid") && entity.getName().includes("❤")) {
-			if (!sayLividColors.includes(entity.getName().substr(0, 5))) {
-				sayLividColors.push(entity.getName().substr(0, 5))
+		if (entityName.includes("Livid") && entityName.includes("❤")) {
+			if (!sayLividColors.includes(entityName.substr(0, 5))) {
+				sayLividColors.push(entityName.substr(0, 5))
 				if (sayLividColors.length === 9) {
 					//ChatLib.chat("Correct livid is: " + entity.getName())
-					correctLividColorHP = entity.getName().substr(0, 5)
+					correctLividColorHP = entityName.substr(0, 5)
 				}
 				if (sayLividColors.length === 1) {
 					//ChatLib.chat("Correct livid is: " + entity.getName())
-					correctLividColorHP = entity.getName().substr(0, 5)
+					correctLividColorHP = entityName.substr(0, 5)
 				}
 			}
 
 			if (sayLividColors.length === 1) {
-				if (entity.getName().includes("Livid") && entity.getName().includes("❤")) {
-					spiritBearName = entity.getName()
+				if (entityName.includes("Livid") && entityName.includes("❤")) {
+					spiritBearName = entityName
 				}
 			} else {
 				if (correctLividColorHP !== undefined) {
 					if (correctLividColor === "Arcade") {
 						spiritBearName = "Unknown Health (Yellow Livid)"
 					} else {
-						if (entity.getName().includes(correctLividColorHP)) {
-							spiritBearName = entity.getName()
+						if (entityName.includes(correctLividColorHP)) {
+							spiritBearName = entityName
 						}
 					}
 				}
 			}
 
+		}
+
+		if (settings.getSetting("Dungeons", "Put a box around bats")) {
+			if (entityName === "Bat") {
+				boxesnew.push([entity, 0, 255, 0, null, null]);
+			}
+		}
+		if (settings.getSetting("Dungeons", "Show box around Spirit Bear and Spirit Bow and Correct Livid")) {
+			if (entityName.includes("Spirit Bear") || entityName.includes("Spirit Bow")) {
+				boxesnew.push([entity, 75, 0, 130, null, null]);
+			}
+			if (sayLividColors.length === 1) {
+				if (entityName.includes("Livid") && entityName.includes("❤")) {
+					boxesnew.push([entity, 75, 0, 130, 0.75, -2]);
+				}
+			} else {
+				if (correctLividColor !== undefined) {
+					if (entityName === correctLividColor + " Livid") {
+						boxesnew.push([entity, 75, 0, 130, 0.75, 2]);
+					}
+				}
+			}
+		}
+
+		if (settings.getSetting("Dungeons", "Put a red box around skeleton masters")) {
+			if (entityName.includes("Skeleton Master") && entity.getEntity() instanceof ArmourStandClass) {
+				boxesnew.push([entity, 255, 0, 0, 0.75, -2]);
+			}
 		}
 		// if (new RegExp("&8\[&7Lv[0-9]{1,3}\&8] &[0123456789ABCDEFLMNOabcdeflmno]" + Player.getName() + "'s( [A-Z][A-z]*)+").test(entity.getName())) {
 		// 	let result = entity.getName().match(new RegExp("&8\\[&7Lv([0-9]{1,3})\\&8] (&[0123456789ABCDEFLMNOabcdeflmno])Soopyboo32's (( *[A-Z][A-z]*)+)"))
@@ -1408,6 +1827,7 @@ let tickEvent = register("tick", () => {
 		// }
 	})
 
+	boxes = boxesnew
 
 	if (new Date().getTime() - lastTime1 > (isSoopy ? 3000 : 10000)) {
 		lastTime1 = new Date().getTime()
@@ -1427,6 +1847,7 @@ let tickEvent = register("tick", () => {
 	}
 
 
+
 	//keybind
 
 	// if (streamGameKeyBind.isPressed()) {
@@ -1443,7 +1864,7 @@ let tickEvent = register("tick", () => {
 	dungeon1m = null
 
 	Scoreboard.getLines().forEach((line) => {
-		if (line.getName().toLowerCase().includes("catacombs")) {
+		if (ChatLib.removeFormatting(line.getName()).toLowerCase().includes("dungeon")) {
 			inDungeons = true
 		}
 
@@ -1486,112 +1907,798 @@ let tickEvent = register("tick", () => {
 		lastDungbelow1m = now
 	}
 
-	playersNearbye = 0;
-	let allPlayers = World.getAllPlayers()
-	playersInWorld = allPlayers.length
-	if (playersInWorld > 35 && settings.getSetting("Performance", "Hide close entity's during splash")) {
-		allPlayers.forEach((player) => {
-			let distToPlayer = Math.sqrt(Math.pow(player.getX() - Player.getX(), 2) + Math.pow(player.getY() - Player.getY(), 2) + Math.pow(player.getZ() - Player.getZ(), 2))
-
-			if (distToPlayer < 3) {
-				playersNearbye++
-			}
-		})
-	}
 
 	//other
 	worldTime++
 
-	//fps
+	//Puzzle solvers
 
-	fpsDis = (fpsDis || 0) + ((1 / (msPerFrameLast / 1000)) - (fpsDis || 0)) / 50
+	//ice walk
 
-	setLocation(settings.getSetting("Spam hider", "What corner of the screen?"),
-		settings.getSetting("Spam hider", "ADVANCED: x Offset"),
-		settings.getSetting("Spam hider", "ADVANCED: y Offset"))
 
+	let playerX = Math.floor(Player.getX())
+	let playerY = Math.floor(Player.getY())
+	let playerZ = Math.floor(Player.getZ())
+	
+
+	if (World.getBlockAt(playerX, playerY - 1, playerZ).getRegistryName() === "minecraft:packed_ice" || World.getBlockAt(playerX, playerY - 1, playerZ).getRegistryName() === "minecraft:ice" && settings.getSetting("Dungeons", "Ice Puzzle solver")) {
+		if (!updatingIce) {
+			updatingIce = true
+			//ChatLib.chat("Updating")
+			new Thread(() => {
+				let blocks = []
+				let blocksNeeded = []
+
+				for (let x = -10; x < 10; x++) {
+					blocks[x + 10] = []
+					for (let y = -10; y < 10; y++) {
+						if (World.getBlockAt(playerX + x, playerY - 1, playerZ + y).getRegistryName() === "minecraft:ice" && World.getBlockAt(playerX + x, playerY, playerZ + y).getRegistryName() === "minecraft:air") {
+							blocks[x + 10][y + 10] = 0;
+							blocksNeeded.push([x + 10, y + 10])
+						} else {
+							blocks[x + 10][y + 10] = 1;
+						}
+						if (x == 0 && y == 0) {
+							blocks[x + 10][y + 10] = 2
+						}
+					}
+				}
+
+				let solution = [-1]
+				let skipPaths = []
+
+				//skilPaths in format [solutionId, skipId]
+				//skipId 1 = skip x++ and x--
+
+				//x++ = 0
+				//x-- = 1
+				//y++ = 2
+				//y-- = 3
+				let blockData = []
+				blocks.forEach((b) => {
+					blockData.push([...b])
+				})
+				let solved = false
+				let loops = 0
+				let solvX = 10;
+				let solvY = 10;
+				while (!solved) {
+					loops++
+
+					if(loops%1000 === 0){
+						let block = World.getBlockAt(Math.floor(Player.getX()),Math.floor(Player.getY()) -1,Math.floor(Player.getZ())).getName()
+						if(block !== "Ice" && block !== "Packed Ice"){
+							iceData.render = false;
+							break;
+						}
+					}
+
+					if (solution.length === 0) {
+						iceData.render = false;
+						//ChatLib.chat("No solution! (Back to far)")
+						break;
+					}
+
+					if (skipPaths[solution.length] == undefined) {
+						skipPaths[solution.length] = -1
+					}
+
+					let skipData = skipPaths[solution.length]
+
+					//blocks.forEach((a) => { ChatLib.chat(a.join(" ")) })
+
+					//ChatLib.chat("Solution: " + solution.join(","))
+					//ChatLib.chat("Solution: " + solution.join(",") + " (" + skipData + ")")
+					//ChatLib.chat("Cache: " + iceSolveCache[blockData.map(b => b.join("")).join(",")])
+					// ChatLib.chat("[" + blocks[solvX + 1][solvY + 1] + "," + blocks[solvX + 0][solvY + 1] + "," + blocks[solvX - 1][solvY + 1] + "]")
+					// ChatLib.chat("[" + blocks[solvX + 1][solvY] + "," + blocks[solvX + 0][solvY] + "," + blocks[solvX - 1][solvY] + "]")
+					//ChatLib.chat("[" + blocks[solvX + 1][solvY - 1] + "," + blocks[solvX + 0][solvY - 1] + "," + blocks[solvX - 1][solvY - 1] + "]")
+					//if (iceSolveCache[blockData.map(b => b.join("")).join(",")] === undefined) {
+
+					let impossible = false
+					let blocksAlone = 0
+
+					blocksNeeded.forEach((loc) => {
+						if (blockData[loc[0]][loc[1]] === 0) {
+							let a = 0
+							try{
+								if(blockData[loc[0]][loc[1] + 1] >= 1){
+									a++
+								}
+							}catch(e){a++}
+							try{
+								if(blockData[loc[0]][loc[1] - 1] >= 1){
+									a++
+								}
+							}catch(e){a++}
+							try{
+								if(blockData[loc[0] + 1][loc[1]] >= 1){
+									a++
+								}
+							}catch(e){a++}
+							try{
+								if(blockData[loc[0] - 1][loc[1]] >= 1){
+									a++
+								}
+							}catch(e){a++}
+							if (a>=3) {
+								blocksAlone++
+								if(a === 4){
+									blocksAlone++
+								}
+								if (blocksAlone >= 3) {
+									impossible = true
+								}
+							}
+						}
+					})
+
+					if(impossible){
+						
+						if (skipData < 3) {
+							skipPaths[solution.length]++
+						} else {
+							//ChatLib.chat("Setting cache Impossible")
+							//iceSolveCache[blockData.map(b => b.join("")).join(",")] = "impossible"
+							skipPaths.pop()
+							solution.pop()
+
+							blockData = []
+							blocks.forEach((b) => {
+								blockData.push([...b])
+							})
+
+							solvX = 10;
+							solvY = 10;
+							blockData[solvX][solvY] = 2
+							solution.forEach((step) => {
+								blockData[solvX][solvY] = 1
+								if (step === 0) {
+									solvX++
+								}
+								if (step === 1) {
+									solvX--
+								}
+								if (step === 2) {
+									solvY++
+								}
+								if (step === 3) {
+									solvY--
+								}
+								blockData[solvX][solvY] = 2
+							})
+						}
+
+					}else{
+
+					if (blockData[solvX + 1][solvY] === 0 && skipData < 0) { //block at x++ is free
+						skipPaths[solution.length] = 0
+						solution.push(0)
+						blockData[solvX][solvY] = 1
+						solvX++
+						blockData[solvX][solvY] = 2
+					} else {
+						if (blockData[solvX - 1][solvY] === 0 && skipData < 1) { //block at x-- is free
+							skipPaths[solution.length] = 1
+							solution.push(1)
+							blockData[solvX][solvY] = 1
+							solvX--
+							blockData[solvX][solvY] = 2
+						} else {
+							if (blockData[solvX][solvY + 1] === 0 && skipData < 2) { //block at y++ is free
+								skipPaths[solution.length] = 2
+								solution.push(2)
+								blockData[solvX][solvY] = 1
+								solvY++
+								blockData[solvX][solvY] = 2
+							} else {
+								if (blockData[solvX][solvY - 1] === 0 && skipData < 3) { //block at y-- is free
+									skipPaths[solution.length] = 3
+									solution.push(3)
+									blockData[solvX][solvY] = 1
+									solvY--
+									blockData[solvX][solvY] = 2
+								} else {
+									//Cant go in any direction, u need to reverse steps now lmao nub
+									//unless u got it correct
+
+									//correct checking:
+									let isCorrect = true
+
+									blockData.forEach((b) => {
+										b.forEach((a) => {
+											if (a === 0) {
+												isCorrect = false
+											}
+										})
+									})
+
+									if (!isCorrect) {
+										if (skipData < 3) {
+											skipPaths[solution.length]++
+										} else {
+											//ChatLib.chat("Setting cache Impossible")
+											//iceSolveCache[blockData.map(b => b.join("")).join(",")] = "impossible"
+											skipPaths.pop()
+											solution.pop()
+
+											blockData = []
+											blocks.forEach((b) => {
+												blockData.push([...b])
+											})
+
+											solvX = 10;
+											solvY = 10;
+											blockData[solvX][solvY] = 2
+											solution.forEach((step) => {
+												blockData[solvX][solvY] = 1
+												if (step === 0) {
+													solvX++
+												}
+												if (step === 1) {
+													solvX--
+												}
+												if (step === 2) {
+													solvY++
+												}
+												if (step === 3) {
+													solvY--
+												}
+												blockData[solvX][solvY] = 2
+											})
+										}
+
+									} else {
+										solved = true
+										iceData.render = true
+										//iceSolveCache[blocks.map(b => b.join("")).join(",")] = solution.join("").replace("NaN1", "").substr(2)
+										// ChatLib.chat("Solved!")
+										// ChatLib.chat("Setting cache Solved")
+
+										// blockData = []
+										// blocks.forEach((b) => {
+										// 	blockData.push([...b])
+										// })
+
+										// solvX = 10;
+										// solvY = 10;
+										// blockData[solvX][solvY] = 2
+										// let solutionSoFar = []
+										// solution.forEach((step) => {
+										// 	blockData[solvX][solvY] = 1
+										// 	if (step === 0) {
+										// 		solvX++
+										// 	}
+										// 	if (step === 1) {
+										// 		solvX--
+										// 	}
+										// 	if (step === 2) {
+										// 		solvY++
+										// 	}
+										// 	if (step === 3) {
+										// 		solvY--
+										// 	}
+										// 	blockData[solvX][solvY] = 2
+										// 	solutionSoFar.push(step)
+										// 	iceSolveCache[blockData.map(b => b.join("")).join(",")] = solution.join("").replace(solutionSoFar.join("").replace("NaN1", "").substr(2)).replace("NaN1", "").substr(2)
+										// })
+									}
+								}
+							}
+						}
+					}
+				}
+					// } else {
+					// 	if (iceSolveCache[blockData.map(b => b.join("")).join(",")] === "impossible") {
+
+					// 		ChatLib.chat("Skipping due to impossible (cache)")
+
+					// 		skipPaths.pop()
+					// 		solution.pop()
+
+					// 		blockData = []
+					// 		blocks.forEach((b) => {
+					// 			blockData.push([...b])
+					// 		})
+
+					// 		solvX = 10;
+					// 		solvY = 10;
+					// 		blockData[solvX][solvY] = 1
+					// 		solution.forEach((step) => {
+					// 			if (step === 0) {
+					// 				solvX++
+					// 			}
+					// 			if (step === 1) {
+					// 				solvX--
+					// 			}
+					// 			if (step === 2) {
+					// 				solvY++
+					// 			}
+					// 			if (step === 3) {
+					// 				solvY--
+					// 			}
+					// 			blockData[solvX][solvY] = 1
+					// 		})
+					// 	} else {
+					// 		ChatLib.chat("Solved (cache)")
+					// 		solution = [...solution.map(a => parseInt(a.toString().replace("NaN1", ""))), ...iceSolveCache[blockData.map(b => b.join("")).join(",")].replace("NaN", "").split("").map(a => (a !== -1 && parseInt(a) !== NaN ? parseInt(a) : ""))]
+					// 		solution = solution.join("").replace("NaN1", "").replace("-1", "")
+					// 		ChatLib.chat(solution)
+					// 		solved = true
+					// 		iceData.render = true
+					// 		iceSolveCache[blocks.map(b => b.join("")).join(",")] = solution
+					// 		solution = solution.split("")
+					// 	}
+					// }
+				}
+
+				iceData.solution = solution
+				iceData.map = blocks
+				iceData.playerX = playerX
+				iceData.playerY = playerY
+				iceData.playerZ = playerZ
+				//ChatLib.chat("----------------------")
+				updatingIce = false
+			}).start()
+
+		}
+	} else {
+		iceData.render = false;
+	}
+
+	lastMsTickTime = new Date().getTime()-startTime
+	
+	endFunctionPerformanceAnalize("Main tick event")
 })
 
+let boxes = []
+let updatingLong = false
+
+
+let colorReplace = {
+	"§6":Renderer.color(255,170,0,150),
+	"§9":Renderer.color(85,85,255,150),
+	"§d":Renderer.color(255,85,255,150),
+	"§5":Renderer.color(170,0,170,150),
+	"§e":Renderer.color(255,255,85,150),
+	"§7":Renderer.color(170,170,170,150),
+	"§c":Renderer.color(255,85,85,150),
+	"§f":Renderer.color(255,255,255,150),
+	"§a":Renderer.color(85,255,85,150)
+}
+
+let clickQueue = []
+let clickQueueDone = undefined
+let lastInventoryString = ""
+let lastClickTime = 0
+
+function getInventoryString(){
+	if(Player.getOpenedInventory() === null){
+		return "null"
+	}
+
+	return Player.getOpenedInventory().getItems().map((item)=>{
+		return item == null || item.getID() === -1 ? "null" : (item.getRegistryName() + ";" + item.getStackSize() + ";" + item.isEnchanted() + ";" + item.getRawNBT() + ";" + item.getMetadata())
+	}).join("/")
+}
+
+register("tick",()=>{
+	
+	startFunctionPerformanceAnalize("Terminal queue tick event")
+	//console.log("------------------------")
+	//console.log(0)
+	let currInvStr = getInventoryString() // A string unique to the items in the inv, will get changed if anything changes with them
+	if(new Date().getTime()-lastClickTime < 1000){
+		//console.log(1)
+		if(clickQueue.length === 0 && clickQueueDone === undefined){
+			return
+		}
+		//console.log(2)
+		
+		if(currInvStr === lastInventoryString){
+			return;
+		}
+		//console.log(3)
+	}else{
+		//console.log(4)
+		if(clickQueueDone === undefined){
+			//console.log(4.1)
+			if(clickQueue.length === 0){
+				//console.log(4.2)
+				return;
+			}else{
+				//console.log(4.3)
+			}
+		}
+		//console.log(5)
+	}
+	//console.log(6)
+	lastInventoryString = currInvStr
+	lastClickTime = new Date().getTime()
+	
+	//console.log(7)
+	if(clickQueue.length > 0){
+		//console.log(8)
+		if(Player.getOpenedInventory().getSize() !== 45){
+			//console.log(9)
+			let slot = clickQueue.shift()
+			Player.getOpenedInventory().click(slot,false,"MIDDLE")
+			//Player.getOpenedInventory().drop(slot)
+			clickQueueDone = slot
+		}else{
+			//console.log(10)
+			clickQueue = []
+			clickQueueDone = undefined
+			lastClickTime = 0
+		}
+		//console.log(11)
+	}else{
+		//console.log(12)
+		clickQueueDone = undefined
+		lastClickTime = 0
+	}
+	//console.log(13)
+	endFunctionPerformanceAnalize("Terminal queue tick event")
+})
+
+
+register("guiMouseClick",(mouseX,mouseY,button,gui,event)=>{
+
+	if(!settings.getSetting("Dungeons","Better terminal clicking")){return;}
+    let inventory;
+    try {
+        inventory = Player.getOpenedInventory();
+    } catch (e) {
+        return
+	}
+	if(itemsHighlight.length + itemsHighlight2.length > 0){
+		cancel(event)
+	}else{
+		let names = ["correct all the panes!","navigate the maze!"]
+		if(names.includes(ChatLib.removeFormatting(Player.getOpenedInventory().getName().toLowerCase()))){
+			if(Player.getOpenedInventory() !== null){
+				let slot = 0
+				while(slot < inventory.getSize()-1){
+					const x = slot % 9;
+					const y = Math.floor(slot / 9);
+					const renderX = Renderer.screen.getWidth() / 2 + ((x - 4) * 18);
+					const renderY = (Renderer.screen.getHeight() + 10) / 2 + ((y - inventory.getSize() / 18) * 18);
+			
+					if(mouseX>renderX-10 && mouseX < renderX+10
+					&& mouseY > renderY-10 && mouseY < renderY+10){
+						if(settings.getSetting("Dungeons","Queue terminal clicking") && ChatLib.removeFormatting(Player.getOpenedInventory().getName().toLowerCase()) !== "navigate the maze!"){
+							if(!clickQueue.includes(slot)){
+								clickQueue.push(slot)
+							}
+						}else{
+							Player.getOpenedInventory().click(slot,false,"MIDDLE")
+						}
+						cancel(event)
+						break;
+					}
+
+					slot++
+				}
+			}
+		}
+		return;
+	}
+	itemsHighlight.forEach((slot, i) => {
+		if(clickQueue.includes(slot)){
+			return;
+		}
+        const x = slot % 9;
+        const y = Math.floor(slot / 9);
+        const renderX = Renderer.screen.getWidth() / 2 + ((x - 4) * 18);
+        const renderY = (Renderer.screen.getHeight() + 10) / 2 + ((y - inventory.getSize() / 18) * 18);
+
+		if(mouseX>renderX-8 && mouseX < renderX+8
+		  && mouseY > renderY-8 && mouseY < renderY+8){
+			if(settings.getSetting("Dungeons","Queue terminal clicking")){
+				if(!clickQueue.includes(slot)){
+					clickQueue.push(slot)
+				}
+			}else{  
+				Player.getOpenedInventory().click(slot,false,"MIDDLE")
+			}
+			//Player.getOpenedInventory().click(slot,false,"MIDDLE")
+		}
+	})
+	
+})
+
+register("itemTooltip",(lore, item, event)=>{
+	if(itemsHighlight.length + itemsHighlight2.length > 0){
+		cancel(event)
+	}
+})
+
+register("postGuiRender", (gui, mouseX, mouseY) => {
+	
+	startFunctionPerformanceAnalize("Post gui render event")
+	//render code from ExperimentationTable because mine wouldent work 50% of the time
+
+    let inventory;
+    try {
+        inventory = Player.getOpenedInventory();
+    } catch (e) {
+        return;
+    }
+	GlStateManager.func_179094_E(); // push
+	itemsHighlight.forEach((slot) => {
+		if([...clickQueue,clickQueueDone].includes(slot)){return;}
+        const x = slot % 9;
+        const y = Math.floor(slot / 9);
+        const renderX = Renderer.screen.getWidth() / 2 + ((x - 4) * 18);
+        const renderY = (Renderer.screen.getHeight() + 10) / 2 + ((y - inventory.getSize() / 18) * 18);
+
+        Renderer.translate(0, 0, 260);
+		Renderer.drawRect(Renderer.color(0, 255, 0, 200), renderX-8, renderY-8, 16, 16);
+		
+	})
+	itemsHighlight2.forEach((slot) => {
+        const x = slot % 9;
+        const y = Math.floor(slot / 9);
+        const renderX = Renderer.screen.getWidth() / 2 + ((x - 4) * 18);
+        const renderY = (Renderer.screen.getHeight() + 10) / 2 + ((y - inventory.getSize() / 18) * 18);
+
+        Renderer.translate(0, 0, 260);
+        Renderer.drawRect(Renderer.color(255, 255, 0, 200), renderX-8, renderY-8, 16, 16);
+	})
+	clickQueue.forEach((slot,i) => {
+        const x = slot % 9;
+        const y = Math.floor(slot / 9);
+        const renderX = Renderer.screen.getWidth() / 2 + ((x - 4) * 18);
+        const renderY = (Renderer.screen.getHeight() + 10) / 2 + ((y - inventory.getSize() / 18) * 18);
+
+        Renderer.translate(0, 0, 260);
+		Renderer.drawRect(Renderer.color(50, 50,50, 200), renderX-8, renderY-8, 16, 16);
+		Renderer.drawStringWithShadow(i+1,renderX-(Renderer.getStringWidth(i+1)/2), renderY-3.5)
+	})
+	
+	const x = clickQueueDone % 9;
+	const y = Math.floor(clickQueueDone / 9);
+	const renderX = Renderer.screen.getWidth() / 2 + ((x - 4) * 18);
+	const renderY = (Renderer.screen.getHeight() + 10) / 2 + ((y - inventory.getSize() / 18) * 18);
+	Renderer.drawStringWithShadow("0",renderX-(Renderer.getStringWidth("0")/2), renderY-3.5)
+
+	Renderer.translate(0, 0, 260);
+	Renderer.drawRect(Renderer.color(50, 50,50, 200), renderX-8, renderY-8, 16, 16);
+
+	// if(settings.getSetting("Other","Item rarity halo")){
+	// 		inventory.getItems().forEach((item, slot) =>{
+	// 			try{
+	// 				const x = slot % 9;
+	// 				const y = Math.floor(slot / 9);
+	// 				const renderX = Renderer.screen.getWidth() / 2 + ((x - 4) * 18);
+	// 				const renderY = (Renderer.screen.getHeight() + 10) / 2 + ((y - inventory.getSize() / 18) * 18);
+
+	// 				let lore = item.getNBT().getCompoundTag("tag").getCompoundTag("display").getRawNBT().func_150295_c("Lore",8) //getTagList()
+	// 				let color = lore.func_150307_f(lore.func_74745_c()-1).substr(0,2) //lore.getStringTagAt(lore.tagCount()-1)
+
+	// 				color = colorReplace[color]
+
+	// 				if(color !== undefined){
+	// 					if(settings.getSetting("Other","Item rarity halo as circle")){
+	// 						Renderer.drawCircle(color,renderX, renderY+8,8,15)
+	// 					}
+	// 				}
+	// 			}catch(e){}
+	// 		})
+	// }
+	GlStateManager.func_179121_F(); // pop
+	
+	
+	endFunctionPerformanceAnalize("Post gui render event")
+})
+
+
+//Puzzler solver
+
+//&e[NPC] &dPuzzler&f: &r&5▶&5▶&b◀&d▲&b◀&d▲&d▲&a▼&d▲&d▲&r
+//on message
+//1) find puzzler
+//2) block he is standing on
+//3) do loop over directions
+
+let puzzleLocaion = undefined
+
+register("chat",(directions)=>{
+	if(directions.includes("&")){
+		let dirArray = directions.split("&")
+
+		let startLoc = [181,195,135]
+
+		dirArray.forEach((dir)=>{
+			switch(dir.substr(0,1)){
+				case "5":
+					startLoc[0]--
+				break;
+				case "b":
+					startLoc[0]++
+				break;
+				case "d":
+					startLoc[2]++
+				break;
+				case "a":
+					startLoc[2]--
+				break;
+			}
+		})
+
+		puzzleLocaion = startLoc
+	}
+	if(directions.includes("Nice!")){
+		puzzleLocaion = undefined
+	}
+}).setChatCriteria("&e[NPC] &dPuzzler&f: &r${directions}&r")
+//&e[NPC] &dPuzzler&f: &r&d▲&a▼&b◀&d▲&d▲&5▶&d▲&a▼&5▶&d▲&r
+
+register("worldLoad",()=>{
+	puzzleLocaion = undefined
+	threemanLoc = undefined
+	lastExplosiveShotTime = -1
+	lastMageCooldown = undefined
+})
+
+let threemanLoc = undefined
+
+
+function drawBoxAtBlock(x, y, z, colorR, colorG, colorB){
+
+	GL11.glBlendFunc(770, 771);
+	GL11.glEnable(GL11.GL_BLEND);
+	GL11.glLineWidth(3);
+	GL11.glDisable(GL11.GL_TEXTURE_2D);
+	GL11.glDisable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(false);
+	GlStateManager.func_179094_E();
+
+	
+	Tessellator.begin(3).colorize(colorR, colorG, colorB);
+		
+	Tessellator.pos(x+1,y+1,z+1).tex(0, 0);
+	Tessellator.pos(x+1,y+1,z).tex(0, 0);
+	Tessellator.pos(x,y+1,z).tex(0, 0);
+	Tessellator.pos(x,y+1,z+1).tex(0, 0);
+	Tessellator.pos(x+1,y+1,z+1).tex(0, 0);
+	Tessellator.pos(x+1,y,z+1).tex(0, 0);
+	Tessellator.pos(x+1,y,z).tex(0, 0);
+	Tessellator.pos(x,y,z).tex(0, 0);
+	Tessellator.pos(x,y,z+1).tex(0, 0);
+	Tessellator.pos(x,y,z).tex(0, 0);
+	Tessellator.pos(x,y+1,z).tex(0, 0);
+	Tessellator.pos(x,y,z).tex(0, 0);
+	Tessellator.pos(x+1,y,z).tex(0, 0);
+	Tessellator.pos(x+1,y+1,z).tex(0, 0);
+	Tessellator.pos(x+1,y,z).tex(0, 0);
+	Tessellator.pos(x+1,y,z+1).tex(0, 0);
+	Tessellator.pos(x,y,z+1).tex(0, 0);
+	Tessellator.pos(x,y+1,z+1).tex(0, 0);
+	Tessellator.pos(x+1,y+1,z+1).tex(0, 0);
+
+	Tessellator.draw();
+
+	GlStateManager.func_179121_F();
+	GL11.glEnable(GL11.GL_TEXTURE_2D);
+	GL11.glEnable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(true);
+	GL11.glDisable(GL11.GL_BLEND);
+}
+
+function drawBoxAtEntity(entity, colorR, colorG, colorB, width, height, partialTicks){
+	let x = entity.getX() + ((entity.getX()-entity.getLastX())*partialTicks)
+	let y = entity.getY() + ((entity.getY()-entity.getLastY())*partialTicks)
+    let z = entity.getZ() + ((entity.getZ()-entity.getLastZ())*partialTicks)
+    
+    if(width === null){
+        width = entity.getWidth()/2
+        height = entity.getHeight()
+    }else{
+        width = width/2
+    }
+	
+
+    GL11.glBlendFunc(770, 771);
+    GL11.glEnable(GL11.GL_BLEND);
+    GL11.glLineWidth(2);
+    GL11.glDisable(GL11.GL_TEXTURE_2D);
+    GlStateManager.func_179094_E();
+
+	
+	Tessellator.begin(3).colorize(colorR, colorG, colorB);
+		
+	Tessellator.pos(x+width,y+height,z+width).tex(0, 0);
+	Tessellator.pos(x+width,y+height,z-width).tex(0, 0);
+	Tessellator.pos(x-width,y+height,z-width).tex(0, 0);
+	Tessellator.pos(x-width,y+height,z+width).tex(0, 0);
+	Tessellator.pos(x+width,y+height,z+width).tex(0, 0);
+	Tessellator.pos(x+width,y,z+width).tex(0, 0);
+	Tessellator.pos(x+width,y,z-width).tex(0, 0);
+	Tessellator.pos(x-width,y,z-width).tex(0, 0);
+	Tessellator.pos(x-width,y,z+width).tex(0, 0);
+	Tessellator.pos(x-width,y,z-width).tex(0, 0);
+	Tessellator.pos(x-width,y+height,z-width).tex(0, 0);
+	Tessellator.pos(x-width,y,z-width).tex(0, 0);
+	Tessellator.pos(x+width,y,z-width).tex(0, 0);
+	Tessellator.pos(x+width,y+height,z-width).tex(0, 0);
+	Tessellator.pos(x+width,y,z-width).tex(0, 0);
+	Tessellator.pos(x+width,y,z+width).tex(0, 0);
+	Tessellator.pos(x-width,y,z+width).tex(0, 0);
+	Tessellator.pos(x-width,y+height,z+width).tex(0, 0);
+	Tessellator.pos(x+width,y+height,z+width).tex(0, 0);
+
+	Tessellator.draw();
+
+	GlStateManager.func_179121_F();
+    GL11.glEnable(GL11.GL_TEXTURE_2D);
+    GL11.glDisable(GL11.GL_BLEND);
+}
+
+
+
+//Explosive shot timer
+let lastExplosiveShotTime = -1
+
+let explosiveShotLength = 0
+let playerDungeonLevels = {}
+let lastMageCooldown = undefined
+
+register("chat",()=>{
+	lastExplosiveShotTime = new Date().getTime()
+
+	explosiveShotLength = 50000-(Math.floor((playerDungeonLevels?.archer || 0)/5)*2000)
+}).setChatCriteria("&r&aUsed &r&6Explosive Shot&r&a!&r")
+register("chat",()=>{
+	lastExplosiveShotTime = new Date().getTime()
+
+	explosiveShotLength = 30000*(lastMageCooldown || 1-((Math.floor((playerDungeonLevels?.mage + 50 || 50)/2))/100))
+}).setChatCriteria("&r&aUsed &r&6Guided Sheep&r&a!&r")
+register("chat",(cd)=>{
+	lastMageCooldown = 1-(parseInt(cd)/100)
+
+	explosiveShotLength = 30000*(lastMageCooldown || 1-((Math.floor((playerDungeonLevels?.mage + 50 || 50)/2))/100))
+}).setChatCriteria("&r&a[Mage] &r&fCooldown Reduction &r&c${*}%&r&f -> &r&a${cd}%&r")
+
+
+//riddle solver
+
+//&r&a&lPUZZLE SOLVED! &r&6Soopyboo32 &r&ewasn't fooled by &r&cLino&r&e! &r&4G&r&co&r&6o&r&ed&r&a &r&2j&r&bo&r&3b&r&5!&r
+
+
+register("chat",()=>{
+	threemanLoc = undefined
+}).setChatCriteria("&r&a&lPUZZLE SOLVED! &r&6Soopyboo32 &r&ewasn't fooled by &r${*}&r&e! &r${*}&r")
+
+let answers = ["&e[NPC] &c${name}&f: &rMy chest doesn't have the reward. We are all telling the truth${*}", "&e[NPC] &c${name}&f: &rThe reward isn't in any of our chests${*}", "&e[NPC] &c${name}&f: &rThe reward is not in my chest!&r", "&e[NPC] &c${name}&f: &rAt least one of them is lying, and the reward is not in ${target}'s &rchest${*}", "&e[NPC] &c${name}&f: &rBoth of them are telling the truth. Also,${target}has the reward in their chest${*}", "&e[NPC] &c${name}&f: &rMy chest has the reward and I'm telling the truth${*}"]
+answers.forEach((answer)=>{
+	register("chat",(name)=>{
+		ChatLib.chat("&c " + name + " has the blessing!")
+		World.getAllEntities().forEach((e)=>{
+			if(ChatLib.removeFormatting(e.getName()) === name){
+				if(World.getBlockAt(e.getX()-1,e.getY(),e.getZ()).getRegistryName() === "minecraft:chest"){
+					threemanLoc = [e.getX()-1,e.getY(),e.getZ()]
+				}
+				if(World.getBlockAt(e.getX()+1,e.getY(),e.getZ()).getRegistryName() === "minecraft:chest"){
+					threemanLoc = [e.getX()+1,e.getY(),e.getZ()]
+				}
+				if(World.getBlockAt(e.getX(),e.getY(),e.getZ()+1).getRegistryName() === "minecraft:chest"){
+					threemanLoc = [e.getX(),e.getY(),e.getZ()+1]
+				}
+				if(World.getBlockAt(e.getX(),e.getY(),e.getZ()-1).getRegistryName() === "minecraft:chest"){
+					threemanLoc = [e.getX(),e.getY(),e.getZ()-1]
+				}
+				
+				threemanLoc = threemanLoc.map((a)=>{return Math.floor(a)})
+			}
+		})
+
+	}).setChatCriteria(answer)
+})
+//&e[NPC] &cLino&f: &rThe reward isn't in any of our chests.&r
 //Performance
 
 
-let renderEntity = register("renderEntity", function (entity, position, ticks, event) {
-	if (entity.getName() === Player.getName()) {
-		return;
-	}
-	if (settings.getSetting("Dungeons", "Put a box around bats")) {
-		if (entity.getName() === "Bat") {
-			drawBox(entity, 0, 255, 0, 2.0, null, null, ticks);
-		}
-	}
-	if (settings.getSetting("Dungeons", "Show box around Spirit Bear and Spirit Bow and Correct Livid")) {
-		if (entity.getName().includes("Spirit Bear") || entity.getName().includes("Spirit Bow")) {
-			drawBox(entity, 75, 0, 130, 2.0, null, null, ticks);
-		}
-		if (sayLividColors.length === 1) {
-			if (entity.getName().includes("Livid") && entity.getName().includes("❤")) {
-				drawBox(entity, 75, 0, 130, 2.0, 0.75, -2, ticks);
-			}
-		} else {
-			if (correctLividColor !== undefined) {
-				if (entity.getName() === correctLividColor + " Livid") {
-					drawBox(entity, 75, 0, 130, 2.0, 0.75, 2, ticks);
-				}
-			}
-		}
-	}
-	if (settings.getSetting("Dungeons", "Hide nametags of incorrect livids")) {
-		if (entity.getName().substr(0, 5) !== correctLividColorHP) {
-			cancel(e)
-		}
-	}
-	if (settings.getSetting("Performance", "Disable EVERYTHING render")) {
-		cancel(event);
-		return;
-	}
-
-
-
-	if (playersNearbye > 15 && settings.getSetting("Performance", "Hide close entity's during splash")) {
-		let distTo = Math.sqrt(Math.pow(entity.getX() - Player.getX(), 2) + Math.pow(entity.getY() - Player.getY(), 2) + Math.pow(entity.getZ() - Player.getZ(), 2))
-		if (distTo < 5) {
-			cancel(event)
-			return;
-		}
-	}
-
-	switch (entity.getClassName()) {
-		case ("EntityArmorStand"):
-
-			if (settings.getSetting("Dungeons", "Put a red box around skeleton masters")) {
-				if (entity.getName().includes("Skeleton Master")) {
-					drawBox(entity, 255, 0, 0, 2.0, 0.75, -2, ticks);
-				}
-			}
-			if (settings.getSetting("Performance", "Disable armour stands render")) { cancel(event) }
-
-			if (settings.getSetting("Performance", "Enable armourstand render distance")) {
-				let distTo = Math.sqrt(Math.pow(entity.getX() - Player.getX(), 2) + Math.pow(entity.getY() - Player.getY(), 2) + Math.pow(entity.getZ() - Player.getZ(), 2))
-				if (distTo > settings.getSetting("Performance", "Armourstand render distance")) {
-					if (entity.getX() !== 0 && entity.getY() !== 0 && entity.getZ() !== 0) {
-						cancel(event)
-					}
-				}
-			}
-			break;
-		case ("EntityOtherPlayerMP"):
-			if (settings.getSetting("Performance", "Player render distance (Only if there is more than 25 players online)")) {
-
-				let distTo = Math.sqrt(Math.pow(entity.getX() - Player.getX(), 2) + Math.pow(entity.getY() - Player.getY(), 2) + Math.pow(entity.getZ() - Player.getZ(), 2))
-				if (playersInWorld > 25 && distTo > 25) {
-					cancel(event)
-				}
-			}
-			break;
-	}
-})
-
-let renderEntityEventEnabled = true;
 
 
 let soopyaddonDownloads = 0;
@@ -1710,7 +2817,17 @@ function showPlayerStats(player) {
 					skillApiOff = true
 				} else {
 					let skillEXP = playerProf["experience_skill_" + skill]
-					let skillData = getLevelByXp(skillEXP, skill === "runecrafting" ? 1 : 0)
+
+					playerSkillExp += playerProf["experience_skill_" + skill];
+					let lvlCap = skillLevelCaps["experience_skill_" + skill]
+					if(skill === "farming"){
+					  try{
+						lvlCap -= 10
+						lvlCap += playerProf.jacob2.perks.farming_level_cap
+					  }catch(e){}
+					}
+					
+					let skillData = getLevelByXp(skillEXP, skill === "runecrafting" ? 1 : 0,lvlCap)
 
 					skillHover += "&r" + firstLetterWordCapital(skill) + ": &7" + Math.round((skillData.level + skillData.progress) * 100) / 100 + "\n&r"
 					if (skill === "carpentry" || skill === "runecrafting") {
@@ -1750,14 +2867,16 @@ function showPlayerStats(player) {
 				"UNCOMMON": "&a",
 				"RARE": "&9",
 				"EPIC": "&5",
-				"LEGENDARY": "&6"
+				"LEGENDARY": "&6",
+				"MYTHIC": "&d"
 			}
 			let rarityNumber = {
 				"COMMON": 1,
 				"UNCOMMON": 2,
 				"RARE": 3,
 				"EPIC": 4,
-				"LEGENDARY": 5
+				"LEGENDARY": 5,
+				"MYTHIC": 5
 			}
 
 			if (playerProf.pets.length > 0) {
@@ -1877,202 +2996,70 @@ let soopyCommand = register("command", (...args) => {
 				break;
 			case "guild":
 				if (args[1] === undefined) {
-					ChatLib.chat("&cUsage: /soopy guild [lbtype] [guildName]");
-					ChatLib.chat("&cValid LB types are: Skill, slayer, catacombs, soopy-skill");
+					ChatLib.chat("&cUsage: /soopy guild [guildName]");
 					return;
 				}
 
 				let gName = [...args];
 				gName.shift()
-				gName.shift()
 				gName = gName.join(" ")
 
-				if (args[1].toLowerCase() === "skill") {
-					if (lastPersonApi === gName &&
-						lastPersonApiMode === 2 &&
-						lastPersonApiTime - 10000 > new Date().getTime()) {
-						ChatLib.chat("&cCalm down there!");
-						return;
-					}
-					lastPersonApiMode = 2;
-				} else {
-					if (args[1].toLowerCase() === "slayer") {
-						if (lastPersonApi === gName &&
-							lastPersonApiMode === 3 &&
-							lastPersonApiTime - 10000 > new Date().getTime()) {
-							ChatLib.chat("&cCalm down there!");
-							return;
-						}
-						lastPersonApiMode = 3;
-					} else {
-						if (args[1].toLowerCase() === "soopy-skill") {
-							if (lastPersonApi === gName &&
-								lastPersonApiMode === 4 &&
-								lastPersonApiTime - 10000 > new Date().getTime()) {
-								ChatLib.chat("&cCalm down there!");
-								return;
-							}
-							lastPersonApiMode = 4;
-						} else {
-							if (args[1].toLowerCase() === "gexp") {
-								if (lastPersonApi === gName &&
-									lastPersonApiMode === 6 &&
-									lastPersonApiTime - 10000 > new Date().getTime()) {
-									ChatLib.chat("&cCalm down there!");
-									return;
-								}
-								lastPersonApiMode = 6;
-							} else {
-								if (args[1].toLowerCase() === "catacombs") {
-									if (lastPersonApi === gName &&
-										lastPersonApiMode === 5 &&
-										lastPersonApiTime - 10000 > new Date().getTime()) {
-										ChatLib.chat("&cCalm down there!");
-										return;
-									}
-									lastPersonApiMode = 4;
-								} else {
-									let gName = [...args];
-									gName.shift()
-									gName = gName.join(" ")
-
-									let mess = new Message();
-
-									mess.addTextComponent(new TextComponent("&3" + gName + " LB: "))
-									mess.addTextComponent(new TextComponent("&6[Slayer] ").setHover("show_text", "&7Click to show slayer lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild slayer " + gName))
-									mess.addTextComponent(new TextComponent("&6[Skill] ").setHover("show_text", "&7Click to show skill lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild skill " + gName))
-									mess.addTextComponent(new TextComponent("&6[Catacombs] ").setHover("show_text", "&7Click to show catacombs lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild catacombs " + gName))
-									mess.addTextComponent(new TextComponent("&6[Soopy Skill] ").setHover("show_text", "&7Click to show soopy skill lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild soopy-skill " + gName))
-									mess.addTextComponent(new TextComponent("&6[gExp] ").setHover("show_text", "&7Click to show soopy skill lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild gexp " + gName))
-
-									betterBreak("&2", undefined, true)
-									mess.chat()
-									betterBreak("&2", undefined, true)
-
-									return;
-								}
-							}
-						}
-					}
-				}
-
-				lastPersonApi = gName;
-				lastPersonApiTime = new Date().getTime();
-
-				let messageId = Math.floor(Math.random() * 5000)
-				new Message(new TextComponent("Loading...")).setChatLineId(messageId).chat()
-
-
-				let loaded = false;
-
-				while (!loaded) {
-					let response = JSON.parse(FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/guildData.json?key=lkRFxoMYwrkgovPRn2zt&guildName=" + gName.replace(/ /gi, "%20").toLowerCase()))
-					let unloadedMembs = 0;
-					let totalMembs = 0;
-					if (response.success) {
-						response.data.members.forEach((memb) => {
-							if (!memb.loaded) {
-								unloadedMembs++
-							}
-							totalMembs++
-						})
-
-						if (unloadedMembs === 0) {
-							loaded = true
-
-							betterBreak("&2", undefined, true)
-							ChatLib.chat("Guild lb For: &1" + response.data.name + "&7 (" + args[1].toLowerCase() + ")")
-							Thread.sleep(1000)
-							let pos = totalMembs
-							if (args[1].toLowerCase() === "skill") {
-								let membersSorted = response.data.members.sort((a, b) => { return a["skill-avg"] - b["skill-avg"] })
-								let total = 0;
-								membersSorted.forEach((memb) => {
-									let mess = new Message();
-									mess.addTextComponent(new TextComponent(pos + ": &7" + memb.name + " " + memb["skill-avg"]).setHover("show_text", "&7Click to show more info for " + memb.name).setClickAction("run_command").setClickValue("/soopy player " + memb.name))
-									mess.chat()
-									total += memb["skill-avg"]
-									pos--
-									Thread.sleep(10)
-								})
-								ChatLib.chat("Average skill level: &3" + Math.round(total / membersSorted.length * 100) / 100)
-							}
-							if (args[1].toLowerCase() === "catacombs") {
-								let membersSorted = response.data.members.sort((a, b) => { return a["dungeon"] - b["dungeon"] })
-								let total = 0;
-								membersSorted.forEach((memb) => {
-									let mess = new Message();
-									mess.addTextComponent(new TextComponent(pos + ": &7" + memb.name + " " + memb["dungeon"]).setHover("show_text", "&7Click to show more info for " + memb.name).setClickAction("run_command").setClickValue("/soopy player " + memb.name))
-									mess.chat()
-									total += memb["dungeon"]
-									pos--
-									Thread.sleep(10)
-								})
-								ChatLib.chat("Average catacombs level: &3" + Math.round(total / membersSorted.length * 100) / 100)
-							}
-							if (args[1].toLowerCase() === "slayer") {
-								let membersSorted = response.data.members.sort((a, b) => { return a["total-slayer"] - b["total-slayer"] })
-								let total = 0;
-								membersSorted.forEach((memb) => {
-									let mess = new Message();
-									mess.addTextComponent(new TextComponent(pos + ": &7" + memb.name + " " + addNotation("oneLetters", memb["total-slayer"])).setHover("show_text", "&7Click to show more info for " + memb.name).setClickAction("run_command").setClickValue("/soopy player " + memb.name))
-									mess.chat()
-									total += memb["total-slayer"]
-									pos--
-									Thread.sleep(10)
-								})
-								ChatLib.chat("Average slayer exp: &3" + addNotation("oneLetters", total / membersSorted.length))
-							}
-							if (args[1].toLowerCase() === "soopy-skill") {
-								let membersSorted = response.data.members.sort((a, b) => { return a["skill"] - b["skill"] })
-								membersSorted.forEach((memb) => {
-									let mess = new Message();
-									mess.addTextComponent(new TextComponent(pos + ": &7" + memb.name + " " + (memb["skill-approx"] === 0 ? "&2" : "&c") + memb["skill"]).setHover("show_text", "&7Click to show more info for " + memb.name).setClickAction("run_command").setClickValue("/soopy player " + memb.name))
-									mess.chat()
-									pos--
-									Thread.sleep(10)
-								})
-							}
-							if (args[1].toLowerCase() === "gexp") {
-								let membersSorted = response.data.members.sort((a, b) => { return a["gExp"] - b["gExp"] })
-								membersSorted.forEach((memb) => {
-									let mess = new Message();
-									mess.addTextComponent(new TextComponent(pos + ": &7" + memb.name + " &2" + memb["gExp"]).setHover("show_text", "&7Click to show more info for " + memb.name).setClickAction("run_command").setClickValue("/soopy player " + memb.name))
-									mess.chat()
-									pos--
-									Thread.sleep(10)
-								})
-							}
-							let mess = new Message();
-
-							mess.addTextComponent(new TextComponent("Guild lb For: &1" + response.data.name + "&7 (" + args[1].toLowerCase() + ") "))
-							mess.addTextComponent(new TextComponent("&6[Slayer] ").setHover("show_text", "&7Click to show slayer lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild slayer " + gName))
-							mess.addTextComponent(new TextComponent("&6[Skill] ").setHover("show_text", "&7Click to show skill lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild skill " + gName))
-							mess.addTextComponent(new TextComponent("&6[Catacombs] ").setHover("show_text", "&7Click to show catacombs lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild catacombs " + gName))
-							mess.addTextComponent(new TextComponent("&6[Soopy Skill] ").setHover("show_text", "&7Click to show soopy skill lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild soopy-skill " + gName))
-							mess.addTextComponent(new TextComponent("&6[gExp] ").setHover("show_text", "&7Click to show soopy skill lb for " + gName).setClickAction("run_command").setClickValue("/soopy guild gexp " + gName))
-
-							mess.chat()
-							betterBreak("&2", undefined, true)
-
-						} else {
-							Client.getChatGUI().func_146242_c(messageId)
-							new Message("Loading... (" + (totalMembs - unloadedMembs) + "/" + totalMembs + ")").setChatLineId(messageId).chat()
-						}
-					} else {
-						this.loaded = true;
-						let mess = new Message();
-						mess.addTextComponent(new TextComponent("&cError Loading Guild LB, Click here to retry").setHover("show_text", "&7Click to retry loading guild data").setClickAction("run_command").setClickValue("/soopy guild " + args[1].toLowerCase() + " " + gName))
-						mess.chat()
-						return;
-					}
-
-					Thread.sleep(5000)
-				}
+				guildLbGuiManager.open(gName)
 
 				break;
 			case "downloads":
 				ChatLib.chat("Soopyaddons curranately has " + soopyaddonDownloads + " downloads (According to chattriggers api)")
+				break;
+			
+			case "setkey":
+				let data
+				try{
+					data = JSON.parse(FileLib.getUrlContent("https://api.hypixel.net/key?key=" + args[1]))
+				}catch(e){
+					ChatLib.chat("&cInvalid api key!")
+					return;
+				}
+				if(!data.success) {
+					ChatLib.chat("&cInvalid api key!")
+					return;
+				}
+				ChatLib.chat("&cSuccess!")
+				soopySettings.setSetting("hidden", "api-key", args[1])
+				soopySettings.saveSettings()
+				break;
+
+			case "clearkey":
+				ChatLib.chat("&cSuccess!")
+				soopySettings.setSetting("hidden", "api-key", "undefined")
+				soopySettings.saveSettings()
+				break;
+		
+			case "getkey":
+				ChatLib.chat("&cYour set api key is " + soopySettings.getSetting("hidden", "api-key"))
+				break;
+
+			case "performanceanalize":
+				
+				ChatLib.chat("&cStarting performance analize! This will take 5 seconds to complete!")
+				analisingPerformance = true
+				functionPerformanceData = {}
+				new Thread(()=>{
+					Thread.sleep(5000)
+
+					analisingPerformance = false
+					let totalMs = 0
+
+					ChatLib.chat("&cPerformance data:")
+					Object.keys(functionPerformanceData).sort((a,b)=>{
+						return functionPerformanceData[b].totalTime - functionPerformanceData[a].totalTime;
+					}).forEach((key)=>{
+						totalMs += functionPerformanceData[key].totalTime
+						ChatLib.chat(" &7 - " + key + " took " + Math.floor(functionPerformanceData[key].totalTime) + "ms (" + functionPerformanceData[key].calls + " calls)")
+					})
+					ChatLib.chat("&cThis shows soopyaddons should have a " + Math.round((totalMs/5000)*1000)/10 + "% performance impact.")
+					ChatLib.chat("&cSo without soopyaddons your fps should go from " + Client.getFPS() + " to " + Math.round(Client.getFPS()*(1+(totalMs/5000))))
+					ChatLib.chat("&c")
+				}).start()
 				break;
 
 			default:
@@ -2083,6 +3070,7 @@ let soopyCommand = register("command", (...args) => {
 					ChatLib.chat("&7If so use the command /soopyaddons")
 					ChatLib.chat("&7You can also use /soopy player [ign] to check their stats")
 					ChatLib.chat("&7Or /soopy guild [guildName] to check the leaderboard")
+					ChatLib.chat("&7Or /soopy setkey [key] if u want to set ur api key")
 				}
 				break;
 		}
@@ -2093,10 +3081,10 @@ let soopyCommand = register("command", (...args) => {
 
 addCustomCompletion(soopyCommand, (args) => {
 	if (args.length == 0) {
-		return ["player", "guild"]
+		return ["player", "guild","getkey","clearkey","setkey","performanceanalize"]
 	}
 	if (args.length == 1) {
-		return ["player", "guild"].filter((n) =>
+		return ["player", "guild","getkey","clearkey","setkey","performanceanalize"].filter((n) =>
 			n.toLowerCase().startsWith(args.length ? args[0].toLowerCase() : "")
 		)
 	}
@@ -2124,8 +3112,24 @@ addCustomCompletion(soopyCommand, (args) => {
 });
 
 let joindungeonCommand = register("command", (...args, e) => {
-	ChatLib.say("/joindungeon" + args.join(" "))
-}).setName("joindungeon")
+	ChatLib.say("/joindungeon " + args.join(" "))
+}).setName("joindungeon") 
+register("command", (...args) => {
+	if (args[0] === undefined) {
+		ChatLib.chat("&cUsage: /guild [guildName]");
+		return;
+	}
+	if(args[0] === "accept"){
+		ChatLib.command("guild accept" + args[1])
+		return;
+	}
+
+	let gName = [...args];
+	gName = gName.join(" ")
+
+	guildLbGuiManager.open(gName)
+
+}).setName("guild")
 
 addCustomCompletion(joindungeonCommand, (args) => {
 	if (args.length == 0) {
@@ -2137,6 +3141,85 @@ addCustomCompletion(joindungeonCommand, (args) => {
 		)
 	}
 });
+
+
+TriggerRegister.registerChat((name, playerClass, level) => { playerJoinDungeonParty(name, playerClass, level) }).setChatCriteria("&dDungeon Finder &r&f> &r${name} &r&ejoined the dungeon group! (&r${playerClass} Level ${level}&r&e)&r")
+
+function playerJoinDungeonParty(player, playerClass, level) {
+
+	playerClass = playerClass.toLowerCase()
+
+	let levelNum = parseInt(level)
+
+	if (isNaN(levelNum)) {
+		ChatLib.chat("&cAn Error Occured")
+		return;
+	}
+
+	if (player.slice(0, 1) === "&") {
+		player = player.slice(2)
+	}
+
+	new Thread(() => {
+		let playerData = JSON.parse(FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/getHypixelApi.json?key=lkRFxoMYwrkgovPRn2zt&dataWanted=player?name=" + player))
+		let skyblockData = JSON.parse(FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/getHypixelApi.json?key=lkRFxoMYwrkgovPRn2zt&dataWanted=skyblock_profiles?uuid=" + playerData.data.player.uuid))
+
+		let canJoin = {
+			5: false,
+			6: false
+		}
+		skyblockData.data.profiles.forEach((profile) => {
+			try {
+				if (profile.members[playerData.data.player.uuid].dungeons.dungeon_types.catacombs.tier_completions[4] > 0) {
+					canJoin[5] = true
+				}
+				if (profile.members[playerData.data.player.uuid].dungeons.dungeon_types.catacombs.tier_completions[5] > 0) {
+					canJoin[6] = true
+				}
+			} catch (e) {
+
+			}
+		})
+
+		if (settings.getSetting("Dungeons", "Auto-kick players that are able to join a f5 dungeon")) {
+			if (canJoin[5]) {
+				commandsQueue.push("/p kick " + player)
+				return;
+			}
+		}
+		if (settings.getSetting("Dungeons", "Auto-kick players that are able to join a f6 dungeon")) {
+			if (canJoin[6]) {
+				commandsQueue.push("-/p kick " + player)
+				return;
+			}
+		}
+	}).start()
+
+}
+
+let fletcherMessages = {
+	"yellow and see through":"20 yellow stained glass.",
+	"circlular and sometimes moves":"1 compass.",
+	"expensive minerals":"20 mythril.",
+	"useful during celebrations":"1 firework rocket.",
+	"hot and gives energy":"1 cheap coffee or decent coffee.",
+	"tall and can be opened":"1 wooden door.",
+	"explosive and more than usual":"1 superboom tnt.",
+	"wearable and grows":"1 pumpkin.",
+	"shiny and makes sparks":"1 flint and steel.",
+	"red and white and you can mine it":"20 nether quartz ore.",
+	"round and green, or purple":"16 ender pearl.",
+	"red and soft":"50 red wool."
+}
+
+Object.keys(fletcherMessages).forEach((mess)=>{
+	register("chat",()=>{
+		ChatLib.chat("&cFetchur wants: " + fletcherMessages[mess])
+	}).setChatCriteria("&e[NPC] Fetchur&f: &rtheyre " + mess + "&r")
+	register("chat",()=>{
+		ChatLib.chat("&cFetchur wants: " + fletcherMessages[mess])
+	}).setChatCriteria("&e[NPC] Fetchur&f: &rits " + mess + "&r")
+})
 
 // register("command", (name) => {
 // 	let book = new Book("&7Book title")
@@ -2981,6 +4064,16 @@ let constants = {
 }
 
 
+let skillLevelCaps = {
+	"experience_skill_combat": 50,
+	"experience_skill_foraging": 50,
+	"experience_skill_farming": 60,
+	"experience_skill_fishing": 50,
+	"experience_skill_alchemy": 50,
+	"experience_skill_enchanting": 60,
+	"experience_skill_mining": 60,
+	"experience_skill_taming": 50,
+  };
 let someData = {
 	leveling_xp: {
 		1: 50,
@@ -3032,8 +4125,18 @@ let someData = {
 		47: 3100000,
 		48: 3400000,
 		49: 3700000,
-		50: 4000000
-	},
+		50: 4000000,
+		51: 4300000,
+		52: 4600000,
+		53: 4900000,
+		54: 5200000,
+		55: 5500000,
+		56: 5800000,
+		57: 6100000,
+		58: 6400000,
+		59: 6700000,
+		60: 7000000
+	  },
 
 	// XP required for each level of Runecrafting
 	runecrafting_xp: {
@@ -3181,53 +4284,61 @@ let someData = {
 };
 
 
-function getLevelByXp(xp, type) {
-	let xp_table = type === 1 ? someData.runecrafting_xp : type === 2 ? someData.dungeoneering_xp : someData.leveling_xp;
 
+function getLevelByXp(xp, type, levelCap) {
+	let xp_table =
+	  type == 1
+		? someData.runecrafting_xp
+		: type == 2
+		  ? someData.dungeoneering_xp
+		  : someData.leveling_xp;
+  
 	if (isNaN(xp)) {
-		return {
-			xp: 0,
-			level: 0,
-			xpCurrent: 0,
-			xpForNext: xp_table[1],
-			progress: 0
-		};
+	  return {
+		xp: 0,
+		level: 0,
+		xpCurrent: 0,
+		xpForNext: xp_table[1],
+		progress: 0,
+	  };
 	}
-
+  
 	let xpTotal = 0;
 	let level = 0;
-
+  
 	let xpForNext = Infinity;
-
-	let maxLevel = Object.keys(xp_table).sort((a, b) => Number(a) - Number(b)).map(a => Number(a)).pop();
-
+  
+	let maxLevel = Math.min(levelCap,Object.keys(xp_table)
+	  .sort((a, b) => Number(a) - Number(b))
+	  .map((a) => Number(a))
+	  .pop())
+  
 	for (let x = 1; x <= maxLevel; x++) {
-		xpTotal += xp_table[x];
-
-		if (xpTotal > xp) {
-			xpTotal -= xp_table[x];
-			break;
-		} else {
-			level = x;
-		}
+	  xpTotal += xp_table[x];
+  
+	  if (xpTotal > xp) {
+		xpTotal -= xp_table[x];
+		break;
+	  } else {
+		level = x;
+	  }
 	}
-
+  
 	let xpCurrent = Math.floor(xp - xpTotal);
-
-	if (level < maxLevel)
-		xpForNext = Math.ceil(xp_table[level + 1]);
-
+  
+	if (level < maxLevel) xpForNext = Math.ceil(xp_table[level + 1]);
+  
 	let progress = Math.max(0, Math.min(xpCurrent / xpForNext, 1));
-
+  
 	return {
-		xp,
-		level,
-		maxLevel,
-		xpCurrent,
-		xpForNext,
-		progress
+	  xp,
+	  level,
+	  maxLevel,
+	  xpCurrent,
+	  xpForNext,
+	  progress,
 	};
-}
+  }
 
 function toSkillLevel(d) {
 	let a = getLevelByXp(d, 0);
@@ -3250,8 +4361,6 @@ function getSlayerLevel(slayer) {
 }
 
 let petData = []
-let currPetIsParrot = false
-let hasParrot = false
 currPet = "&7Pet: &7Loading..."
 let updatingPets = false;
 let lastPetUpdate = 0;
@@ -3313,18 +4422,21 @@ function updatePets() {
 			"UNCOMMON": "&a",
 			"RARE": "&9",
 			"EPIC": "&5",
-			"LEGENDARY": "&6"
+			"LEGENDARY": "&6",
+			"MYTHIC": "&d"
 		}
 
 		petData = skyblockData.pets
 		playerTamingLevel = skyblockData.taming
+		playerDungeonLevels = skyblockData.dungeonLevels
 
 		//Calculate starting exp thing
 		Object.keys(skyblockData.skills).forEach((skill) => {
 			skill = skill.replace("experience_skill_", "")
 			let skillType = 0;
 			if (skill == "runecrafting") { skillType = 1 }
-			let levelData = getLevelByXp(skyblockData.skills["experience_skill_" + skill], skillType)
+			
+			let levelData = getLevelByXp(skyblockData.skills["experience_skill_" + skill], skillType,50)
 
 			playerSkillExpNextLevel[skill] = levelData.xpForNext
 			playerSkillExp[skill] = levelData.xpCurrent
@@ -3339,11 +4451,8 @@ function updatePets() {
 		}
 
 		petData.forEach((pet) => {
-			if (pet.type === "parrot") {
-				hasParrot = true
-			}
 			if (pet.active) {
-				currPetIsParrot = pet.type === "parrot"
+				
 				if (settings.getSetting("HUD", "Current pet more info")) {
 					currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
 				} else {
@@ -3370,7 +4479,7 @@ register("chat", () => {
 		}
 		id++
 	})
-	currPetIsParrot = false
+	
 }).setChatCriteria("&r&aYou despawned your &r${*}&r&a!&r")
 register("worldLoad", () => {
 	updatePets()
@@ -3389,12 +4498,14 @@ register("chat", (name) => {
 			"UNCOMMON": "&a",
 			"RARE": "&9",
 			"EPIC": "&5",
-			"LEGENDARY": "&6"
+			"LEGENDARY": "&6",
+			"MYTHIC": "&d"
 		}
 
 		let simPetName = petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
 
 		if (name === simPetName) {
+			
 			petData[id].active = true
 			if (settings.getSetting("HUD", "Current pet more info")) {
 				currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
@@ -3420,7 +4531,7 @@ register("chat", () => {
 		}
 		id++
 	})
-	currPetIsParrot = false
+	
 }).setChatCriteria("&r&aYou despawned your &r${*} ${*}&r&a!&r")
 
 register("chat", (name1, name2) => {
@@ -3438,15 +4549,16 @@ register("chat", (name1, name2) => {
 			"UNCOMMON": "&a",
 			"RARE": "&9",
 			"EPIC": "&5",
-			"LEGENDARY": "&6"
+			"LEGENDARY": "&6",
+			"MYTHIC": "&d"
 		}
 
 		let simPetName = petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
 
 		if (name === simPetName) {
 			petData[id].active = true
+			
 
-			currPetIsParrot = pet.type === "parrot"
 			if (settings.getSetting("HUD", "Current pet more info")) {
 				currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
 			} else {
@@ -3462,7 +4574,9 @@ register("step", () => {
 }).setDelay(600)
 
 
+
 TriggerRegister.registerActionBar((type, exp, totalexp) => {
+
 	let expGain = parseFloat(exp.replace(/,/g, "")) - playerSkillExp[type.toLowerCase()]
 	if (playerSkillExp[type.toLowerCase()] === -1) { expGain = 0 }
 	if (expGain < 0) {
@@ -3474,9 +4588,6 @@ TriggerRegister.registerActionBar((type, exp, totalexp) => {
 
 	let id = 0
 	petData.forEach((pet) => {
-		if (pet.type === "parrot") {
-			hasParrot = true
-		}
 		if (pet.active) {
 			try {
 				let petExpGain
@@ -3512,9 +4623,9 @@ TriggerRegister.registerActionBar((type, exp, totalexp) => {
 					"UNCOMMON": "&a",
 					"RARE": "&9",
 					"EPIC": "&5",
-					"LEGENDARY": "&6"
+					"LEGENDARY": "&6",
+					"MYTHIC": "&d"
 				}
-				currPetIsParrot = pet.type === "parrot"
 				if (settings.getSetting("HUD", "Current pet more info")) {
 					currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
 				} else {
@@ -3598,3 +4709,228 @@ const drawBox = (entity, red, green, blue, lineWidth, width, height, partialTick
 	//GL11.glDepthMask(true);
 	GL11.glDisable(GL11.GL_BLEND);
 };
+
+const drawBoxThroughWalls = (entity, red, green, blue, lineWidth, width, height, partialTicks) => {
+	if (width === null) {
+		width = entity.getWidth()
+	}
+	if (height === null) {
+		height = entity.getHeight()
+	}
+
+	GL11.glBlendFunc(770, 771);
+	GL11.glEnable(GL11.GL_BLEND);
+	GL11.glLineWidth(lineWidth);
+	GL11.glDisable(GL11.GL_TEXTURE_2D);
+	GL11.glDisable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(false);
+	GlStateManager.func_179094_E();
+
+	let positions = [
+		[0.5, 0.0, 0.5],
+		[0.5, 1.0, 0.5],
+		[-0.5, 0.0, -0.5],
+		[-0.5, 1.0, -0.5],
+		[0.5, 0.0, -0.5],
+		[0.5, 1.0, -0.5],
+		[-0.5, 0.0, 0.5],
+		[-0.5, 1.0, 0.5],
+		[0.5, 1.0, -0.5],
+		[0.5, 1.0, 0.5],
+		[-0.5, 1.0, 0.5],
+		[0.5, 1.0, 0.5],
+		[-0.5, 1.0, -0.5],
+		[0.5, 1.0, -0.5],
+		[-0.5, 1.0, -0.5],
+		[-0.5, 1.0, 0.5],
+		[0.5, 0.0, -0.5],
+		[0.5, 0.0, 0.5],
+		[-0.5, 0.0, 0.5],
+		[0.5, 0.0, 0.5],
+		[-0.5, 0.0, -0.5],
+		[0.5, 0.0, -0.5],
+		[-0.5, 0.0, -0.5],
+		[-0.5, 0.0, 0.5]
+	]
+
+	let counter = 0;
+
+	Tessellator.begin(3).colorize(red, green, blue);
+	positions.forEach(pos => {
+		Tessellator.pos(
+			entity.getX() + (entity.getX() - entity.getLastX()) * partialTicks + pos[0] * width,
+			entity.getY() + (entity.getY() - entity.getLastY()) * partialTicks + pos[1] * height,
+			entity.getZ() + (entity.getZ() - entity.getLastZ()) * partialTicks + pos[2] * width
+		).tex(0, 0);
+
+		counter++;
+		if (counter % 2 === 0) {
+			Tessellator.draw();
+			if (counter !== 24) {
+				Tessellator.begin(3).colorize(red, green, blue);
+			}
+		}
+	});
+
+	GlStateManager.func_179121_F();
+	GL11.glEnable(GL11.GL_TEXTURE_2D);
+	GL11.glEnable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(true);
+	GL11.glDisable(GL11.GL_BLEND);
+};
+
+
+register("worldLoad",()=>{
+	if(settings.getSetting("Events","Griffin burrow waypoints")){
+		if(soopySettings.getSetting("hidden", "api-key") !== "undefined"){
+			loadBurrialApi(true)
+		}
+	}
+})
+let burrialData = {
+	points: [],
+	locations: []
+}
+function loadBurrialApi(resetLocations){
+
+    if(resetLocations){
+        burrialData.points = []
+        burrialData.locations = []
+    }
+	new Thread(()=>{
+		let data = JSON.parse(FileLib.getUrlContent("https://api.hypixel.net/skyblock/profiles?key=" + soopySettings.getSetting("hidden", "api-key") + "&uuid=" + Player.getUUID().toString().replace(/-/g,"")))
+
+		let newLocations = []
+		if(data.success){
+			profileData = data.profiles[0].members[Player.getUUID().toString().replace(/-/g,"")]
+
+			data.profiles.forEach((prof)=>{
+				if((prof.members[Player.getUUID().toString().replace(/-/g,"")].last_save || 0) > (profileData.last_save || 0)){
+					profileData = prof.members[Player.getUUID().toString().replace(/-/g,"")]
+				}
+			})
+			if(resetLocations){
+				burrialData.locations = profileData.griffin.burrows
+			}else{
+				profileData.griffin.burrows.forEach((burrow)=>{
+					let pushed = false
+					burrialData.locations.forEach((loc)=>{
+						if(loc.x + "," + loc.y + "," + loc.z === burrow.x + "," + burrow.y + "," + burrow.z){
+							newLocations.push(loc)
+							pushed = true
+						}
+					})
+					if(!pushed){
+						burrow.clicked = false
+						newLocations.push(burrow)
+					}
+				})
+
+				burrialData.locations = newLocations
+			}
+		}
+	}).start()
+}
+register("chat",()=>{
+    burrialClicked()
+}).setChatCriteria("&r&eYou dug out a Griffin Burrow! &r&7(${*}/4)&r")
+register("chat",()=>{
+}).setChatCriteria("&r&cYou died!&r")
+register("chat",()=>{
+    burrialClicked()
+}).setChatCriteria("&r&eYou finished the Griffin burrow chain! &r&7(4/4)&r")
+
+function burrialClicked(){
+    burrialData.locations = burrialData.locations.sort((a,b)=>{return (calculateDistance([a.x,a.y,a.z],[Player.getX(),Player.getY(),Player.getZ()]) - calculateDistance([b.x,b.y,b.z],[Player.getX(),Player.getY(),Player.getZ()]))})
+	if(burrialData.locations[0] === undefined) return;
+	if(calculateDistance([burrialData.locations[0].x,burrialData.locations[0].y,burrialData.locations[0].z],[Player.getX(),Player.getY(),Player.getZ()]) < 10){
+        burrialData.locations[0].clicked = true
+    }
+}
+
+function calculateDistance(p1, p2) {
+    var a = p2[0] - p1[0];
+    var b = p2[1] - p1[1];
+    var c = p2[2] - p1[2];
+
+    let ret = Math.sqrt(a * a + b * b + c * c)
+
+    if(ret<0){
+        ret *= -1
+    }
+    return ret;
+}
+
+register("chat",(key)=>{
+	ChatLib.chat("&c[SOOPYADDONS] Copied api key!")
+	
+	soopySettings.setSetting("hidden", "api-key", key)
+	soopySettings.saveSettings()
+}).setChatCriteria("&aYour new API key is &r&b${key}&r")
+
+let analisingPerformance = false
+let functionPerformanceData = {}
+
+function startFunctionPerformanceAnalize(id){
+	if(!analisingPerformance) return;
+
+	if(functionPerformanceData[id] === undefined){
+		functionPerformanceData[id] = {
+			calls: 0,
+			totalTime: 0,
+			lastPerformanceStartTimer: 0
+		}
+	}
+
+	functionPerformanceData[id].lastPerformanceStartTimer = new Date().getTime() + (Instant.now().getNano() / 1000000000);
+	functionPerformanceData[id].calls ++
+}
+
+function endFunctionPerformanceAnalize(id){
+	if(!analisingPerformance) return;
+
+	let currTime = new Date().getTime() + (Instant.now().getNano() / 1000000000);
+
+	functionPerformanceData[id].totalTime += currTime-functionPerformanceData[id].lastPerformanceStartTimer
+	functionPerformanceData[id].lastPerformanceStartTimer = 0;
+}
+
+
+class SoopyApi{
+	constructor(){
+
+	}
+
+	getAlonNameHelp = function(player){
+		let replaceThing = {
+			"Skill Average": "skill-avg",
+			"Catacombs": "dungeon",
+			"Total Slayer": "slayer-total",
+			"Soopy Skill": "skill"
+		}
+		let thing = replaceThing[settings.getSetting("Other", "What stat to use as 'skill'")]
+		let key = player.getUUID().toString().replace(/-/g,"")
+		if(playerSkills[key] === undefined){
+			return ""
+
+		}
+		if (playerSkills[key].error) {
+			if (playerSkills[key].nick) {
+				return " &c[Nick]"
+			} else {
+				return " &c[Error]"
+			}
+		} else {
+			if (playerSkills[key].approx) {
+
+				return " &c[" + (playerSkills[key]["usesSoopyaddons"] === true ? "&d⚝&c" : "") + playerSkills[key][thing] + "]"
+			} else {
+				return " &2[" + (playerSkills[key]["usesSoopyaddons"] === true ? "&d⚝&2" : "") + playerSkills[key][thing] + "]"
+			}
+		}
+	}
+}
+
+let soopyApi = new SoopyApi()
+
+export default soopyApi
