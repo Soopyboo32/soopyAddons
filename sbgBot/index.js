@@ -2,6 +2,8 @@
 /// <reference lib="es2015" />
 export default "Nothing is here";
 import commandQueue from 'soopyAddons/sbgBot/command.js';
+const NBTTagList = Java.type("com.chattriggers.ctjs.minecraft.wrappers.objects.inventory.nbt.NBTTagList")
+const NBTTagString = Java.type("net.minecraft.nbt.NBTTagString")
 
 let isSoopy = Player.getUUID().toString().replace(/-/ig, "") === "dc8c39647b294e03ae9ed13ebd65dd29"
 let isSbgAdmin = isSoopy || Player.getUUID().toString().replace(/-/ig, "") === "b9d90392124048bb993f8f1b836657a8" || Player.getUUID().toString().replace(/-/ig, "") === "a80b52f6707a4f8286cabc6e95cf9fdf"
@@ -18,6 +20,7 @@ new Thread(() => {
         let lowestBins = {}
         let lowestBinsAvg = {}
         let bazaar = {}
+        let scammerData = {}
 
         let commandAlias = {
             "cheapestbin": "lowestbin",
@@ -25,7 +28,10 @@ new Thread(() => {
             "leaderboardposition": "lbpos",
             "stoneof": "whatstone",
             "nw": "networth",
-            "bz": "bazzar"
+            "bz": "bazzar",
+            "sc":"scammercheck",
+            "scammer":"scammercheck",
+            "fetch": "fetchur"
         }
 
         let commandsSpeed = 0
@@ -68,7 +74,8 @@ new Thread(() => {
                     if (i > 10) {
                         i = 0
                         try{
-                        lowestBinsAvg = JSON.parse(FileLib.getUrlContent("http://moulberry.codes/auction_averages_lbin/1day.json")) //Uses moulberrys api, i will maby code my own sometime tho
+                            scammerData = JSON.parse(FileLib.getUrlContent("https://raw.githubusercontent.com/skyblockz/pricecheckbot/master/scammer.json"))
+                            lowestBinsAvg = JSON.parse(FileLib.getUrlContent("http://moulberry.codes/auction_averages_lbin/1day.json")) //Uses moulberrys api, i will maby code my own sometime tho
                         }catch(e){}
                     }
                     bazaar = JSON.parse(FileLib.getUrlContent("https://sky.shiiyu.moe/api/v2/bazaar")) //Uses leas api, i will maby code my own sometime tho
@@ -276,8 +283,7 @@ new Thread(() => {
             //-----------------------------------------------------
             //             SOOPY BOT POGGGGGGGGGGGGG
             //-----------------------------------------------------
-
-
+            
             register("chat", (player, message) => {
                 if (message.substr(0, 1) !== "-" && message.substr(0, 1) !== "/") { return }
                 player = player.replace(/(\[[MVIP&0123456789ABCDEFLMNOabcdeflmnor\+]+\])+? /g, "").replace(/\[[A-z]*\]/g, "").replace(/(&[0123456789ABCDEFLMNOabcdeflmnor])|\[|\]| |\+/g, "")
@@ -459,6 +465,41 @@ new Thread(() => {
             }
         }
 
+        commandFunctions.scammercheck = function(player, command, args){
+            if (args[1] === undefined) {
+                args[1] = player
+            }
+
+            let playerUUID = JSON.parse(FileLib.getUrlContent("https://api.mojang.com/users/profiles/minecraft/" + args[1])).id
+
+            let isScammer = scammerData[playerUUID] !== undefined
+
+            if(!isScammer){
+                if (commandsSpeed > commandsSpeedLimit) {
+                    commandQueue.dm.push(spamBypass("/msg " + player + " @sbgbot "+ (player.toLowerCase()===args[1].toLowerCase()?"You are":args[1]+" is") + " not a scammer"))
+                } else {
+                    commandQueue.dm.push(spamBypass("/gc @" + player + ", " + (player.toLowerCase()===args[1].toLowerCase()?"You are":args[1]+" is") + " not a scammer"))
+                }
+            }else{
+                if (commandsSpeed > commandsSpeedLimit) {
+                    commandQueue.dm.push(spamBypass("/msg " + player + " @sbgbot " +(player.toLowerCase()===args[1].toLowerCase()?"You are":args[1]+" is") + " a scammer"))
+                    commandQueue.dm.push(spamBypass("/msg " + player + " @sbgbot Reason: " + scammerData[playerUUID].reason))
+                } else {
+                    commandQueue.dm.push(spamBypass("/gc @" + player + ", "+ (player.toLowerCase()===args[1].toLowerCase()?"You are":args[1]+" is") + " a scammer"))
+                    commandQueue.dm.push(spamBypass("/gc @" + player + ", Reason: " + scammerData[playerUUID].reason))
+                }
+            }
+        }
+        commandFunctions.fetchur = function(player, command, args){
+            let data = JSON.parse(FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/getFetchur.json?key=lkRFxoMYwrkgovPRn2zt")).fetchur
+
+            if (commandsSpeed > commandsSpeedLimit) {
+                commandQueue.dm.push(spamBypass("/msg " + player + " @sbgbot Fetchur is currently " + (data?data:"Unknown") + "."))
+            } else {
+                commandQueue.dm.push(spamBypass("/gc @" + player + ", Fetchur is currently " + (data?data:"Unknown") + "."))
+            }
+        }
+
         commandFunctions.stats = function(player, command, args) {
             if (args[1] === undefined) {
                 if (commandsSpeed > commandsSpeedLimit) {
@@ -605,7 +646,7 @@ new Thread(() => {
                             if(skill === "farming"){
                               try{
                                 lvlCap -= 10
-                                lvlCap += playerProf.jacob2.perks.farming_level_cap
+                                lvlCap += playerProf.jacob2?.perks?.farming_level_cap || 0
                               }catch(e){}
                             }
                             

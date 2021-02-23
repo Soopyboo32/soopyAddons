@@ -557,6 +557,36 @@ let versionData = {
             changeLog: [
                 "- Fixes a randomly occuring error for some people"
             ]
+        },
+        {
+            version: "v0.1.116",
+            versionId: 74,
+            changeLog: [
+                "- Added better mort GUI"
+            ]
+        },
+        {
+            version: "v0.1.117",
+            versionId: 75,
+            changeLog: [
+                "- Forgot to do proper version change"
+            ]
+        },
+        {
+            version: "v0.1.118",
+            versionId: 76,
+            changeLog: [
+                "- Better mort gui fixes"
+            ]
+        },
+        {
+            version: "v0.1.119",
+            versionId: 77,
+            changeLog: [
+                "- Lots of bug fixes",
+                "- Added GUI text shadow setting",
+                "- Added hyperion hits/second gui element"
+            ]
         }
     ],
     installMessage: [

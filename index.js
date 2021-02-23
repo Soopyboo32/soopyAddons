@@ -1,6 +1,5 @@
 ﻿/// <reference types="../CTAutocomplete" />
 /// <reference lib="es2015" />
-module.exports = {};
 
 
 //					Code for soopyaddons
@@ -24,6 +23,7 @@ const GL11 = Java.type("org.lwjgl.opengl.GL11");
 const Instant = Java.type("java.time.Instant");
 import nothing from 'soopyAddons/sbgBot/index.js';
 import nothing2 from 'soopyAddons/agentlai.js';
+import mortGui from 'soopyAddons/mortGui.js';
 import guildLbGuiManager from 'soopyAddons/guildLb.js';
 const ArmourStandClass = Java.type("net.minecraft.entity.item.EntityArmorStand")
 
@@ -130,6 +130,9 @@ const settings = new SettingsObject(
 		name: "Improvements",
 		settings: [
 			new Setting.Toggle("Better line break", true),
+			new Setting.Button("", "Mort is the person who lets you join dungeons and does party finder", () => { }),
+			new Setting.Button("", "This feature may brake with NEU calender notifications and timer in inventory", () => { }),
+			new Setting.Toggle("Better Mort GUI", true)
 		]
 	},
 	{
@@ -151,7 +154,8 @@ const settings = new SettingsObject(
 			new Setting.Slider("ADVANCED: y Offset", 0, -500, 500, 0),
 			new Setting.Button("Change messages that are moved / hidden", "click", () => {
 				ChatLib.simulateChat("&cOPENING MESSAGE EDITS")
-			})
+			}),
+			new Setting.Toggle("Attempt to add messages advertising auctions / discords to spam hider", true)
 		]
 	},
 	{
@@ -193,8 +197,13 @@ const settings = new SettingsObject(
 		name: "HUD",
 		settings: [
 			new Setting.Toggle("Show FPS and CPS", true),
+			new Setting.Toggle("Show HYPERION hits / second", true),
+			new Setting.Toggle("Show HYPERION hits / second allways", true),
+			new Setting.Toggle("Text shadow for HUD", true),
 			new Setting.Slider("FPS and CPS Display X", 10, 0, Math.max(Renderer.screen.getWidth(), 600), 0),
 			new Setting.Slider("FPS and CPS Display Y", 10, 0, Math.max(Renderer.screen.getHeight(), 600), 0),
+			new Setting.Slider("HYPERION hits / second X", 10, 0, Math.max(Renderer.screen.getWidth(), 600), 0),
+			new Setting.Slider("HYPERION hits / second Y", 40, 0, Math.max(Renderer.screen.getHeight(), 600), 0),
 			new Setting.Toggle("Show 'BOSS SLAIN' Message when you have a empty slayer quest", true),
 			new Setting.Toggle("Show 'BOSS SPAWNED' Message when you have spawned a slayer", true),
 			new Setting.Toggle("Show current pet", true),
@@ -206,7 +215,8 @@ const settings = new SettingsObject(
 	{
 		name: "Events",
 		settings: [
-			new Setting.Toggle("Griffin burrow waypoints", false)
+			new Setting.Toggle("Griffin burrow waypoints", false),
+			new Setting.Toggle("Griffin burrow waypoints Show path",false)
 		]
 	},
 	{
@@ -578,66 +588,72 @@ let dungeon80 = null
 let dungeon1m = null
 let updatingIce = false
 
+function drawHudText(text, x, y){
+	if (settings.getSetting("HUD", "Text shadow for HUD")) {
+		Renderer.drawStringWithShadow(text, x, y)
+	}else{
+		Renderer.drawString(text, x, y)
+	}
+}
+
 function renderOverlay() {
 	startFunctionPerformanceAnalize("RenderOverlay event")
 	let now = new Date().getTime()
 
-	let timePassed = now - lastTimeRender
-
-	let width = Renderer.screen.getWidth()
-	let height = Renderer.screen.getHeight()
-
-	let animDiv = timePassed / 1000
 
 	lastTimeRender = now
 
 	//grindDisplay.render(500, 500)
 
 	if (settings.getSetting("HUD", "Show FPS and CPS")) {
-		Renderer.drawString("&6FPS&7> &f" + (settings.getSetting("Performance", "Enable Tick event")?(Math.round(fpsDis)) : Client.getFPS()), settings.getSetting("HUD","FPS and CPS Display X"), settings.getSetting("HUD","FPS and CPS Display Y"));
-		Renderer.drawString("&6CPS&7> &f" + (CPS.getLeftClicksAverage() + CPS.getRightClicksAverage()), settings.getSetting("HUD","FPS and CPS Display X"), parseInt(settings.getSetting("HUD","FPS and CPS Display Y"))+10);
+		drawHudText("&6FPS&7> &f" + (settings.getSetting("Performance", "Enable Tick event")?(Math.round(fpsDis)) : Client.getFPS()), settings.getSetting("HUD","FPS and CPS Display X"), settings.getSetting("HUD","FPS and CPS Display Y"));
+		drawHudText("&6CPS&7> &f" + (CPS.getLeftClicksAverage() + CPS.getRightClicksAverage()), settings.getSetting("HUD","FPS and CPS Display X"), parseInt(settings.getSetting("HUD","FPS and CPS Display Y"))+10);
+	}
+
+	if(settings.getSetting("HUD", "Show HYPERION hits / second") && (hypKills > 0 || settings.getSetting("HUD","Show HYPERION hits / second allways"))){
+		drawHudText("&6HYP HITS/s&7> &f" + hypKills, settings.getSetting("HUD","HYPERION hits / second X"), settings.getSetting("HUD","HYPERION hits / second Y"));
 	}
 
 	if (settings.getSetting("HUD", "Show current pet")) {
-		Renderer.drawString(currPet, settings.getSetting("HUD", "Pet Display X"), settings.getSetting("HUD", "Pet Display Y"));
+		drawHudText(currPet, settings.getSetting("HUD", "Pet Display X"), settings.getSetting("HUD", "Pet Display Y"));
 	}
 	if (settings.getSetting("Dungeons", "Show no armour message when entering a dungeon") && now - lastNoArmour < 3000) {
 		Renderer.scale(10, 10)
-		Renderer.drawString("&4NO ARMOUR", Renderer.screen.getWidth() / 10 / 2 - Renderer.getStringWidth("NO ARMOUR") / 2, Renderer.screen.getHeight() / 10 / 2 - 5)
+		drawHudText("&4NO ARMOUR", Renderer.screen.getWidth() / 10 / 2 - Renderer.getStringWidth("NO ARMOUR") / 2, Renderer.screen.getHeight() / 10 / 2 - 5)
 		Renderer.scale(1, 1)
 	}
 	if (settings.getSetting("Dungeons", "Show spirit bear / correct livid HP") && spiritBearName !== null) {
-		Renderer.drawString(spiritBearName, settings.getSetting("Dungeons", "Spirit Bear HP X"), settings.getSetting("Dungeons", "Spirit Bear HP Y"));
+		drawHudText(spiritBearName, settings.getSetting("Dungeons", "Spirit Bear HP X"), settings.getSetting("Dungeons", "Spirit Bear HP Y"));
 	}
 
 	if (settings.getSetting("HUD", "Show 'BOSS SLAIN' Message when you have a empty slayer quest") && bossSlainMessage) {
 		Renderer.scale(10, 10)
-		Renderer.drawString("&4BOSS SLAIN", Renderer.screen.getWidth() / 10 / 2 - Renderer.getStringWidth("BOSS SLAIN") / 2, Renderer.screen.getHeight() / 10 / 2 - 5)
+		drawHudText("&4BOSS SLAIN", Renderer.screen.getWidth() / 10 / 2 - Renderer.getStringWidth("BOSS SLAIN") / 2, Renderer.screen.getHeight() / 10 / 2 - 5)
 		Renderer.scale(1, 1)
 	}
 	if (settings.getSetting("HUD", "Show 'BOSS SPAWNED' Message when you have spawned a slayer") && bossSpawnedMessage) {
 		if (now - lastBossNotSpawnedTime < 3000) {
 			Renderer.scale(10, 10)
-			Renderer.drawString("&4BOSS SPAWNED", Renderer.screen.getWidth() / 10 / 2 - Renderer.getStringWidth("BOSS SPAWNED") / 2, Renderer.screen.getHeight() / 10 / 2 - 5)
+			drawHudText("&4BOSS SPAWNED", Renderer.screen.getWidth() / 10 / 2 - Renderer.getStringWidth("BOSS SPAWNED") / 2, Renderer.screen.getHeight() / 10 / 2 - 5)
 			Renderer.scale(1, 1)
 		}
 	}
 	if (settings.getSetting("Dungeons", "Dungeons 80% in alert") && dungeon80 !== null) {
 		if (now - lastDungBelow80 < 5000) {
 			Renderer.scale(5, 5)
-			Renderer.drawString(dungeon80, Renderer.screen.getWidth() / 5 / 2 - Renderer.getStringWidth(dungeon80) / 2, Renderer.screen.getHeight() / 5 / 2 - 5)
+			drawHudText(dungeon80, Renderer.screen.getWidth() / 5 / 2 - Renderer.getStringWidth(dungeon80) / 2, Renderer.screen.getHeight() / 5 / 2 - 5)
 			Renderer.scale(1, 1)
 		}
 	}
 	if (settings.getSetting("Dungeons", "Dungeons 1m in alert") && dungeon1m !== null) {
 		if (now - lastDungbelow1m < 5000) {
 			Renderer.scale(5, 5)
-			Renderer.drawString(dungeon1m, Renderer.screen.getWidth() / 5 / 2 - Renderer.getStringWidth(dungeon1m) / 2, Renderer.screen.getHeight() / 5 / 2 - 5)
+			drawHudText(dungeon1m, Renderer.screen.getWidth() / 5 / 2 - Renderer.getStringWidth(dungeon1m) / 2, Renderer.screen.getHeight() / 5 / 2 - 5)
 			Renderer.scale(1, 1)
 		}
 	}
 	if (settings.getSetting("Dungeons", "Explosive shot timer / guided sheep") && lastExplosiveShotTime !== -1 && inDungeons) {
-		Renderer.drawString(Math.max(0,Math.ceil((explosiveShotLength-(now-lastExplosiveShotTime))/1000)) + "s", Renderer.screen.getWidth() / 2 - Renderer.getStringWidth(Math.max(0,Math.ceil((explosiveShotLength-(now-lastExplosiveShotTime))/1000)) + "s") / 2, Renderer.screen.getHeight() / 2 + 10)
+		drawHudText(Math.max(0,Math.ceil((explosiveShotLength-(now-lastExplosiveShotTime))/1000)) + "s", Renderer.screen.getWidth() / 2 - Renderer.getStringWidth(Math.max(0,Math.ceil((explosiveShotLength-(now-lastExplosiveShotTime))/1000)) + "s") / 2, Renderer.screen.getHeight() / 2 + 10)
 	}
 
 	endFunctionPerformanceAnalize("RenderOverlay event")
@@ -752,6 +768,21 @@ World.getBlockAt
 function getPlayerSkill(skillExp, slayerExp) {
 	return Math.round(Math.pow(skillExp / 1, 0.5))
 }
+
+register("chat",(msg, e)=>{
+	let words = ["free","/p","join","coins","ah","cheap",">>>","<<<","[][]","==","sell","quick","buy","per","give","p me","craft"]
+
+	let detects = 0;
+	words.forEach((word)=>{
+		if(msg.toLowerCase().includes(word)){
+			detects++
+		}
+	})
+
+	if(detects >= 2){
+		chatEvent(e)
+	}
+}).setChatCriteria("${*}&${*}&r&${*}: ${msg}&r")
 
 let playersNearbye = 0;
 let inDungeons = false;
@@ -947,6 +978,13 @@ new Thread(() => {
 	return;
 }).start()
 
+let hyperionKills = []
+let hypKills = 0
+
+register("chat",(num)=>{
+	hyperionKills.push({time: new Date().getTime(),num: parseInt(num)})
+}).setChatCriteria("&r&7Your Implosion hit &r&c${num} &r&7ene${*} for &r${*}damage.&r")
+
 let dragalert = -1
 
 register("command",(...args)=>{
@@ -996,13 +1034,22 @@ function loadDataFor(uuid) {
 	} catch (e) { console.log(e); return false }
 }
 
+register("command",()=>{
+	new Thread(()=>{
+		let data = JSON.parse(FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/getFetchur.json?key=lkRFxoMYwrkgovPRn2zt")).fetchur
+
+		ChatLib.chat("Fetchur is currently " + (data?data:"Unknown") + ".")
+	}).start()
+}).setName("fetchur")
+
 let hideMessages = [
 	"&r${*}&r&6 ${*} the lobby!&r",
 	"&r &b>&c>&a>&r &r${*} the lobby!&r &a<&c<&b<&r",
 	"${*} &r&ffound a &r${*} &r&bMystery Box&r&f!&r",
 	"&b[Mystery Box] ${*} &ffound a ${*}&r",
 	"&r&7Warping you to the ${*} island...&r",
-	"&7Sending to server ${*}...&r"
+	"&7Sending to server ${*}...&r",
+	"&cAutopet &eequipped your ${*}&e! &a&lVIEW RULE&r"
 ]
 let moveMessages = [
 	"${*} > ${*} &r&eleft.&r",
@@ -1081,7 +1128,9 @@ let moveMessages = [
 	"&r${*} Milestone &r${*}&r&7: You have ${*}&r",
 	"&r&cThis ability is on cooldown for ${*}s.&r",
 	"&r&cYou already ate this cake recently!&r",
-	"&r&a&lYou healed ${*} player${*} for ${*} health!&r"
+	"&r&a&lYou healed ${*} player${*} for ${*} health!&r",
+	"&r&dCreeper Veil &r&aActivated!&r",
+	"&r&dCreeper Veil &r&cDe-activated!&r"
 ]
 
 let userEdits = FileLib.read("soopyAddonsData", "messagesDontEdit.json");
@@ -1401,6 +1450,26 @@ register("renderWorld", (ticks) => {
 	// 	bombDefuseSolver.render()
 	// }
 	
+
+	if(lastPath !== undefined && settings.getSetting("Events","Griffin burrow waypoints") && settings.getSetting("Events","Griffin burrow waypoints Show path")){
+		let startPoint = [Player.getX(),
+			Player.getY(),
+			Player.getZ()]
+
+		let points = burrialData.locations.map((a)=>{return [a.x+0.5,a.y+1.3,a.z+0.5]})
+
+
+		let lastPoint = startPoint
+
+		lastPath.forEach((point)=>{
+			let pointLoc = points[point]
+
+			drawLine(...lastPoint,...pointLoc,255,255,0)
+
+			lastPoint = pointLoc
+		})
+	}	
+
 	if(settings.getSetting("Events","Griffin burrow waypoints")){
 		let sorted = burrialData.locations.sort((a,b)=>{
 			let aDist = calculateDistance([Player.getX(),Player.getY(),Player.getZ()],[a.x+0.5,a.y+2.5,a.z+0.5])
@@ -1618,6 +1687,136 @@ let lastMsTickTime = 0
 let lastTickEventTime = 0
 
 let lastTickEventEpochTimestamp = 0
+register("step",()=>{
+	new Thread(()=>{
+		
+		spiritBearName = null
+
+		mortGui.setEnabled(settings.getSetting("Improvements","Better Mort GUI"))
+
+
+		let boxesnew = []
+
+		World.getAllEntities().forEach((entity) => {
+			let entityName = entity.getName()
+			if (entityName === Player.getName()) {
+				return;
+			}
+			if (entityName === "Sheep") {
+				if((Player.getX()-entity.getX() < 4 || Player.getX()-entity.getX() > -4)
+				&& (Player.getY()-entity.getY() < 4 || Player.getY()-entity.getY() > -4)
+				&& (Player.getZ()-entity.getZ() < 4 || Player.getZ()-entity.getZ() > -4))
+				if(playerDungeonLevels?.selectedClass || "" === "mage" && Math.max(0,(explosiveShotLength-(now-lastExplosiveShotTime))) < 5 && entity.getEntity().func_70104_M()){
+					lastExplosiveShotTime = new Date().getTime()
+
+					explosiveShotLength = 30000*(lastMageCooldown || 1-((Math.floor((playerDungeonLevels?.mage + 50 || 50)/2))/100))
+				}
+				return;
+			}
+			if (entityName.includes("Spirit Bow")) {
+				spiritBearName = "&d&lBow Dropped!"
+				return;
+			}
+			if (entityName.includes("Spirit Bear") && entityName.includes("❤")) {
+				spiritBearName = entityName
+				return;
+			}
+			if (/(?:Vendetta|Crossed|Hockey|Doctor|Frog|Smile|Scream|Purple|Arcade) Livid/g.test(entityName)) {
+				let lividName = entityName.replace(" Livid", "")
+
+				if (!sayLividColors2.includes(lividName)) {
+					sayLividColors2.push(lividName)
+					if (sayLividColors2.length === 1) {
+						//ChatLib.chat("First livid is: " + lividColor[lividName] + lividName)
+						correctLividColor = lividName
+					}
+					if (sayLividColors2.length === 9) {
+						ChatLib.chat("Correct livid is: " + lividColor[lividName] + lividName)
+						correctLividColor = lividName
+					}
+				}
+				return;
+			}
+			if (entityName.includes("Livid") && entityName.includes("❤")) {
+				if (!sayLividColors.includes(entityName.substr(0, 5))) {
+					sayLividColors.push(entityName.substr(0, 5))
+					if (sayLividColors.length === 9) {
+						//ChatLib.chat("Correct livid is: " + entity.getName())
+						correctLividColorHP = entityName.substr(0, 5)
+					}
+					if (sayLividColors.length === 1) {
+						//ChatLib.chat("Correct livid is: " + entity.getName())
+						correctLividColorHP = entityName.substr(0, 5)
+					}
+				}
+
+				if (sayLividColors.length === 1) {
+					if (entityName.includes("Livid") && entityName.includes("❤")) {
+						spiritBearName = entityName
+					}
+				} else {
+					if (correctLividColorHP !== undefined) {
+						if (correctLividColor === "Arcade") {
+							spiritBearName = "Unknown Health (Yellow Livid)"
+						} else {
+							if (entityName.includes(correctLividColorHP)) {
+								spiritBearName = entityName
+							}
+						}
+					}
+				}
+
+			}
+
+			if (settings.getSetting("Dungeons", "Put a box around bats")) {
+				if (entityName === "Bat") {
+					boxesnew.push([entity, 0, 255, 0, null, null]);
+				}
+			}
+			if (settings.getSetting("Dungeons", "Show box around Spirit Bear and Spirit Bow and Correct Livid")) {
+				if (entityName.includes("Spirit Bear") || entityName.includes("Spirit Bow")) {
+					boxesnew.push([entity, 75, 0, 130, null, null]);
+				}
+				if (sayLividColors.length === 1) {
+					if (entityName.includes("Livid") && entityName.includes("❤")) {
+						boxesnew.push([entity, 75, 0, 130, 0.75, -2]);
+					}
+				} else {
+					if (correctLividColor !== undefined) {
+						if (entityName === correctLividColor + " Livid") {
+							boxesnew.push([entity, 75, 0, 130, 0.75, 2]);
+						}
+					}
+				}
+			}
+
+			if (settings.getSetting("Dungeons", "Put a red box around skeleton masters")) {
+				if (entityName.includes("Skeleton Master") && entity.getEntity() instanceof ArmourStandClass) {
+					boxesnew.push([entity, 255, 0, 0, 0.75, -2]);
+				}
+			}
+			// if (new RegExp("&8\[&7Lv[0-9]{1,3}\&8] &[0123456789ABCDEFLMNOabcdeflmno]" + Player.getName() + "'s( [A-Z][A-z]*)+").test(entity.getName())) {
+			// 	let result = entity.getName().match(new RegExp("&8\\[&7Lv([0-9]{1,3})\\&8] (&[0123456789ABCDEFLMNOabcdeflmno])Soopyboo32's (( *[A-Z][A-z]*)+)"))
+			// 	let petLevel = parseInt(result[1])
+			// 	let letColor = result[2]
+			// 	let petName = result[3]
+
+			// 	let petTierColor = {
+			// 		"COMMON": "&f",
+			// 		"UNCOMMON": "&a",
+			// 		"RARE": "&9",
+			// 		"EPIC": "&5",
+			// 		"LEGENDARY": "&6"
+			// 	}
+
+			// }
+		})
+
+		boxes = boxesnew
+
+	}).start()
+}).setFps(1)
+
 
 register("tick", () => {
 	
@@ -1701,133 +1900,26 @@ register("tick", () => {
 
 	fpsDis = (fpsDis || 0) + ((1 / (msPerFrameLast / 1000)) - (fpsDis || 0)) / 50
 
+	let hypKillsNew = 0
+
+
+	hyperionKills = hyperionKills.filter((a)=>{
+		if(now-a.time > 1000){
+			return false;
+		}else{
+			hypKillsNew+=a.num
+			return true;
+		}
+	})
+
+	hypKills = Math.max(hypKillsNew,hypKills-1-Math.floor(hypKills/20))
+	
 	if(lastMsTickTime>5 && now-lastTickEventTime < 1000){
 		return;
 	}
 
 	lastTickEventTime = now
 	let startTime = new Date().getTime()
-
-	spiritBearName = null
-
-	let boxesnew = []
-
-	World.getAllEntities().forEach((entity) => {
-		let entityName = entity.getName()
-		if (entityName === Player.getName()) {
-			return;
-		}
-		if (entityName === "Sheep") {
-			if((Player.getX()-entity.getX() < 4 || Player.getX()-entity.getX() > -4)
-			&& (Player.getY()-entity.getY() < 4 || Player.getY()-entity.getY() > -4)
-			&& (Player.getZ()-entity.getZ() < 4 || Player.getZ()-entity.getZ() > -4))
-			if(playerDungeonLevels?.selectedClass || "" === "mage" && Math.max(0,(explosiveShotLength-(now-lastExplosiveShotTime))) < 5 && entity.getEntity().func_70104_M()){
-				lastExplosiveShotTime = new Date().getTime()
-
-				explosiveShotLength = 30000*(lastMageCooldown || 1-((Math.floor((playerDungeonLevels?.mage + 50 || 50)/2))/100))
-			}
-			return;
-		}
-		if (entityName.includes("Spirit Bow")) {
-			spiritBearName = "&d&lBow Dropped!"
-			return;
-		}
-		if (entityName.includes("Spirit Bear") && entityName.includes("❤")) {
-			spiritBearName = entityName
-			return;
-		}
-		if (/(?:Vendetta|Crossed|Hockey|Doctor|Frog|Smile|Scream|Purple|Arcade) Livid/g.test(entityName)) {
-			let lividName = entityName.replace(" Livid", "")
-
-			if (!sayLividColors2.includes(lividName)) {
-				sayLividColors2.push(lividName)
-				if (sayLividColors2.length === 1) {
-					//ChatLib.chat("First livid is: " + lividColor[lividName] + lividName)
-					correctLividColor = lividName
-				}
-				if (sayLividColors2.length === 9) {
-					ChatLib.chat("Correct livid is: " + lividColor[lividName] + lividName)
-					correctLividColor = lividName
-				}
-			}
-			return;
-		}
-		if (entityName.includes("Livid") && entityName.includes("❤")) {
-			if (!sayLividColors.includes(entityName.substr(0, 5))) {
-				sayLividColors.push(entityName.substr(0, 5))
-				if (sayLividColors.length === 9) {
-					//ChatLib.chat("Correct livid is: " + entity.getName())
-					correctLividColorHP = entityName.substr(0, 5)
-				}
-				if (sayLividColors.length === 1) {
-					//ChatLib.chat("Correct livid is: " + entity.getName())
-					correctLividColorHP = entityName.substr(0, 5)
-				}
-			}
-
-			if (sayLividColors.length === 1) {
-				if (entityName.includes("Livid") && entityName.includes("❤")) {
-					spiritBearName = entityName
-				}
-			} else {
-				if (correctLividColorHP !== undefined) {
-					if (correctLividColor === "Arcade") {
-						spiritBearName = "Unknown Health (Yellow Livid)"
-					} else {
-						if (entityName.includes(correctLividColorHP)) {
-							spiritBearName = entityName
-						}
-					}
-				}
-			}
-
-		}
-
-		if (settings.getSetting("Dungeons", "Put a box around bats")) {
-			if (entityName === "Bat") {
-				boxesnew.push([entity, 0, 255, 0, null, null]);
-			}
-		}
-		if (settings.getSetting("Dungeons", "Show box around Spirit Bear and Spirit Bow and Correct Livid")) {
-			if (entityName.includes("Spirit Bear") || entityName.includes("Spirit Bow")) {
-				boxesnew.push([entity, 75, 0, 130, null, null]);
-			}
-			if (sayLividColors.length === 1) {
-				if (entityName.includes("Livid") && entityName.includes("❤")) {
-					boxesnew.push([entity, 75, 0, 130, 0.75, -2]);
-				}
-			} else {
-				if (correctLividColor !== undefined) {
-					if (entityName === correctLividColor + " Livid") {
-						boxesnew.push([entity, 75, 0, 130, 0.75, 2]);
-					}
-				}
-			}
-		}
-
-		if (settings.getSetting("Dungeons", "Put a red box around skeleton masters")) {
-			if (entityName.includes("Skeleton Master") && entity.getEntity() instanceof ArmourStandClass) {
-				boxesnew.push([entity, 255, 0, 0, 0.75, -2]);
-			}
-		}
-		// if (new RegExp("&8\[&7Lv[0-9]{1,3}\&8] &[0123456789ABCDEFLMNOabcdeflmno]" + Player.getName() + "'s( [A-Z][A-z]*)+").test(entity.getName())) {
-		// 	let result = entity.getName().match(new RegExp("&8\\[&7Lv([0-9]{1,3})\\&8] (&[0123456789ABCDEFLMNOabcdeflmno])Soopyboo32's (( *[A-Z][A-z]*)+)"))
-		// 	let petLevel = parseInt(result[1])
-		// 	let letColor = result[2]
-		// 	let petName = result[3]
-
-		// 	let petTierColor = {
-		// 		"COMMON": "&f",
-		// 		"UNCOMMON": "&a",
-		// 		"RARE": "&9",
-		// 		"EPIC": "&5",
-		// 		"LEGENDARY": "&6"
-		// 	}
-
-		// }
-	})
-
-	boxes = boxesnew
 
 	if (new Date().getTime() - lastTime1 > (isSoopy ? 3000 : 10000)) {
 		lastTime1 = new Date().getTime()
@@ -2246,7 +2338,22 @@ register("tick", () => {
 		iceData.render = false;
 	}
 
+
+	if(settings.getSetting("Events","Griffin burrow waypoints") && settings.getSetting("Events","Griffin burrow waypoints Show path")){
+		let startPoint = [Player.getX(),Player.getY(),Player.getZ()]
+
+		let points = burrialData.locations.filter((a)=>{return !a.clicked}).map((a)=>{return [a.x+0.5,a.y+1.3,a.z+0.5]})
+
+
+		lastPath = fastestPathThrough(startPoint,points)
+		
+		if(lastPath.length === 0){
+			lastPath = undefined
+		}
+	}
+
 	lastMsTickTime = new Date().getTime()-startTime
+
 	
 	endFunctionPerformanceAnalize("Main tick event")
 })
@@ -2323,7 +2430,7 @@ register("tick",()=>{
 			//console.log(9)
 			let slot = clickQueue.shift()
 			Player.getOpenedInventory().click(slot,false,"MIDDLE")
-			//Player.getOpenedInventory().drop(slot)
+			Player.getOpenedInventory().getStackInSlot(slot).setStackSize(0)
 			clickQueueDone = slot
 		}else{
 			//console.log(10)
@@ -2453,6 +2560,7 @@ register("postGuiRender", (gui, mouseX, mouseY) => {
 
         Renderer.translate(0, 0, 260);
 		Renderer.drawRect(Renderer.color(50, 50,50, 200), renderX-8, renderY-8, 16, 16);
+		Renderer.translate(0,0,100)
 		Renderer.drawStringWithShadow(i+1,renderX-(Renderer.getStringWidth(i+1)/2), renderY-3.5)
 	})
 	
@@ -2460,6 +2568,7 @@ register("postGuiRender", (gui, mouseX, mouseY) => {
 	const y = Math.floor(clickQueueDone / 9);
 	const renderX = Renderer.screen.getWidth() / 2 + ((x - 4) * 18);
 	const renderY = (Renderer.screen.getHeight() + 10) / 2 + ((y - inventory.getSize() / 18) * 18);
+	Renderer.translate(0,0,100)
 	Renderer.drawStringWithShadow("0",renderX-(Renderer.getStringWidth("0")/2), renderY-3.5)
 
 	Renderer.translate(0, 0, 260);
@@ -2823,7 +2932,7 @@ function showPlayerStats(player) {
 					if(skill === "farming"){
 					  try{
 						lvlCap -= 10
-						lvlCap += playerProf.jacob2.perks.farming_level_cap
+						lvlCap += playerProf.jacob2?.perks?.farming_level_cap || 0
 					  }catch(e){}
 					}
 					
@@ -2897,10 +3006,10 @@ function showPlayerStats(player) {
 
 				playerProf.pets.forEach((pet) => {
 					if (pet.active) {
-						petText = "&7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
+						petText = "&7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
 					}
 
-					petHover += "&7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + "\n"
+					petHover += "&7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + "\n"
 				})
 
 				petHover = petHover.substr(0, petHover.length - 1)
@@ -3114,22 +3223,6 @@ addCustomCompletion(soopyCommand, (args) => {
 let joindungeonCommand = register("command", (...args, e) => {
 	ChatLib.say("/joindungeon " + args.join(" "))
 }).setName("joindungeon") 
-register("command", (...args) => {
-	if (args[0] === undefined) {
-		ChatLib.chat("&cUsage: /guild [guildName]");
-		return;
-	}
-	if(args[0] === "accept"){
-		ChatLib.command("guild accept" + args[1])
-		return;
-	}
-
-	let gName = [...args];
-	gName = gName.join(" ")
-
-	guildLbGuiManager.open(gName)
-
-}).setName("guild")
 
 addCustomCompletion(joindungeonCommand, (args) => {
 	if (args.length == 0) {
@@ -3207,26 +3300,28 @@ let fletcherMessages = {
 	"explosive and more than usual":"1 superboom tnt.",
 	"wearable and grows":"1 pumpkin.",
 	"shiny and makes sparks":"1 flint and steel.",
-	"red and white and you can mine it":"20 nether quartz ore.",
+	"red and white and you can mine it":"50 nether quartz ore.",
 	"round and green, or purple":"16 ender pearl.",
 	"red and soft":"50 red wool."
 }
 
-Object.keys(fletcherMessages).forEach((mess)=>{
-	register("chat",()=>{
-		ChatLib.chat("&cFetchur wants: " + fletcherMessages[mess])
-	}).setChatCriteria("&e[NPC] Fetchur&f: &rtheyre " + mess + "&r")
-	register("chat",()=>{
-		ChatLib.chat("&cFetchur wants: " + fletcherMessages[mess])
-	}).setChatCriteria("&e[NPC] Fetchur&f: &rits " + mess + "&r")
+Object.keys(fletcherMessages).forEach((mess1)=>{
+	[mess1,mess1.replace("and","but"),mess1.replace(" and",",")].forEach((mess)=>{
+		register("chat",()=>{
+			ChatLib.chat("&cFetchur wants: " + fletcherMessages[mess1])
+			new Thread(()=>{
+				FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/setFetchur.json?key=lkRFxoMYwrkgovPRn2zt&fetchur=" + mess1.replace(/ /g,"_"))
+			}).start()
+		}).setChatCriteria("&e[NPC] Fetchur&f: &rtheyre " + mess + "&r")
+		register("chat",()=>{
+			ChatLib.chat("&cFetchur wants: " + fletcherMessages[mess1])
+			new Thread(()=>{
+				FileLib.getUrlContent("http://soopymc.my.to/api/soopyAddons/setFetchur.json?key=lkRFxoMYwrkgovPRn2zt&fetchur=" + mess1.replace(/ /g,"_"))
+			}).start()
+		}).setChatCriteria("&e[NPC] Fetchur&f: &rits " + mess + "&r")
+	})
 })
 
-// register("command", (name) => {
-// 	let book = new Book("&7Book title")
-// 	let pagemsg = new Message(new TextComponent(ChatLib.addColor("&2Test")))
-// 	book.setPage(0, pagemsg)
-// 	book.display()
-// }).setName("book");
 
 
 //Helper functions
@@ -4454,9 +4549,9 @@ function updatePets() {
 			if (pet.active) {
 				
 				if (settings.getSetting("HUD", "Current pet more info")) {
-					currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
+					currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
 				} else {
-					currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
+					currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
 				}
 			}
 		})
@@ -4508,9 +4603,9 @@ register("chat", (name) => {
 			
 			petData[id].active = true
 			if (settings.getSetting("HUD", "Current pet more info")) {
-				currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
+				currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
 			} else {
-				currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
+				currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
 			}
 		}
 		id++
@@ -4560,14 +4655,54 @@ register("chat", (name1, name2) => {
 			
 
 			if (settings.getSetting("HUD", "Current pet more info")) {
-				currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
+				currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
 			} else {
-				currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
+				currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
 			}
 		}
 		id++
 	})
 }).setChatCriteria("&r&aYou summoned your &r${name1} ${name2}&r&a!&r")
+
+register("chat",(pet, e)=>{
+	//pet is like: &7[Lvl 47] &6Mithril Golem
+	currPet = "&7Pet: " + pet
+
+	let petName = pet.split(" ")
+	petName.shift()
+	petName.shift()
+	petName = petName.join(" ")
+
+	let id = 0
+	petData.forEach((pet) => {
+		if (pet.active) {
+
+			petData[id].active = false
+		}
+
+		let petTierColor = {
+			"COMMON": "&f",
+			"UNCOMMON": "&a",
+			"RARE": "&9",
+			"EPIC": "&5",
+			"LEGENDARY": "&6",
+			"MYTHIC": "&d"
+		}
+
+		let simPetName = petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
+
+		if (petName === simPetName) {
+			petData[id].active = true
+			
+
+			if (settings.getSetting("HUD", "Current pet more info")) {
+				currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
+			}
+		}
+		id++
+	})
+
+}).setChatCriteria("&cAutopet &eequipped your ${pet}&e! &a&lVIEW RULE&r")
 
 register("step", () => {
 	updatePets()
@@ -4627,9 +4762,9 @@ TriggerRegister.registerActionBar((type, exp, totalexp) => {
 					"MYTHIC": "&d"
 				}
 				if (settings.getSetting("HUD", "Current pet more info")) {
-					currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
+					currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " ")) + " &r(&e" + numberWithCommas(getPetLevel(pet).xpCurrent) + "/" + numberWithCommas(getPetLevel(pet).xpForNext) + "&r)&e " + (Math.floor(getPetLevel(pet).progress * 10000) / 100) + "%"
 				} else {
-					currPet = "&7Pet: &7[Lv" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
+					currPet = "&7Pet: &7[Lvl" + getPetLevel(pet).level + "] " + petTierColor[pet.tier] + firstLetterWordCapital(pet.type.toLowerCase().replace("_", " "))
 				}
 			} catch (err) { console.log(err.message); console.log(err.stack) }
 		}
@@ -4859,6 +4994,77 @@ function calculateDistance(p1, p2) {
         ret *= -1
     }
     return ret;
+}function calculateDistanceQuick(p1, p2) {
+    var a = p2[0] - p1[0];
+    var b = p2[1] - p1[1];
+    var c = p2[2] - p1[2];
+
+    let ret = a * a + b * b + c * c
+
+    if(ret<0){
+        ret *= -1
+    }
+    return ret;
+}
+
+
+function fastestPathThrough(startPoint, points){
+    let ret = []
+    while(ret.length<points.length){
+        ret.push(ret.length)
+    }
+
+    let retSorted = []
+    let lastPos = startPoint
+    let lastShortest = 0;
+    let lastShortestVal = Infinity
+
+    while(retSorted.length<points.length){
+        ret.forEach((pos)=>{
+            if(retSorted.includes(pos)) return;
+            let val = calculateDistanceQuick(lastPos,points[pos])
+            if(val < lastShortestVal){
+                lastShortestVal = val
+                lastShortest = pos
+            }
+        })
+        retSorted.push(lastShortest)
+        lastPos = points[lastShortest]
+        
+        lastShortest = 0;
+        lastShortestVal = Infinity
+
+    }
+
+    
+    return retSorted;
+}
+
+let lastPath = undefined
+
+function drawLine(x, y, z, x2, y2, z2, r, g, b) {
+
+	GL11.glBlendFunc(770, 771);
+	GL11.glEnable(GL11.GL_BLEND);
+	GL11.glLineWidth(1);
+	GL11.glDisable(GL11.GL_TEXTURE_2D);
+	GL11.glDisable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(false);
+	GlStateManager.func_179094_E();
+
+	Tessellator.begin(3).colorize(r, g, b);
+
+	Tessellator.pos(x, y, z).tex(0, 0);
+	Tessellator.pos(x2, y2, z2).tex(0, 0);
+
+	Tessellator.draw();
+
+
+	GlStateManager.func_179121_F();
+	GL11.glEnable(GL11.GL_TEXTURE_2D);
+	GL11.glEnable(GL11.GL_DEPTH_TEST);
+	GL11.glDepthMask(true);
+	GL11.glDisable(GL11.GL_BLEND);
 }
 
 register("chat",(key)=>{

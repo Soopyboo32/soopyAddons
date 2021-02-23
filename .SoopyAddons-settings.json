@@ -5,7 +5,7 @@
       {
         "type": "button",
         "name": "&6Soopy&7Addons",
-        "text": "&7Version v0.1.111",
+        "text": "&7Version v0.1.119",
         "method": "/Function(\n() => {\n}\n)/",
         "hidden": false
       },
@@ -59,6 +59,26 @@
       {
         "type": "toggle",
         "name": "Better line break",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "",
+        "text": "Mort is the person who lets you join dungeons and does party finder",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "",
+        "text": "This feature may brake with NEU calender notifications and timer in inventory",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Better Mort GUI",
         "value": true,
         "hidden": false
       }
@@ -133,6 +153,12 @@
         "text": "click",
         "method": "/Function(\n() => {\n    ChatLib.simulateChat(\"&cOPENING MESSAGE EDITS\");\n}\n)/",
         "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Attempt to add messages advertising auctions / discords to spam hider",
+        "value": true,
+        "hidden": false
       }
     ]
   },
@@ -205,7 +231,7 @@
       {
         "type": "slider",
         "name": "Spirit Bear HP Y",
-        "value": "88",
+        "value": 40,
         "min": 0,
         "max": 600,
         "round": 0,
@@ -282,7 +308,7 @@
       {
         "type": "toggle",
         "name": "Queue terminal clicking",
-        "value": true,
+        "value": false,
         "hidden": false
       },
       {
@@ -309,6 +335,24 @@
         "hidden": false
       },
       {
+        "type": "toggle",
+        "name": "Show HYPERION hits / second",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show HYPERION hits / second allways",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Text shadow for HUD",
+        "value": true,
+        "hidden": false
+      },
+      {
         "type": "slider",
         "name": "FPS and CPS Display X",
         "value": 10,
@@ -320,7 +364,25 @@
       {
         "type": "slider",
         "name": "FPS and CPS Display Y",
-        "value": "185",
+        "value": "176",
+        "min": 0,
+        "max": 600,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "HYPERION hits / second X",
+        "value": 10,
+        "min": 0,
+        "max": 960,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "HYPERION hits / second Y",
+        "value": "195",
         "min": 0,
         "max": 600,
         "round": 0,
@@ -362,7 +424,7 @@
       {
         "type": "slider",
         "name": "Pet Display Y",
-        "value": "205",
+        "value": "204",
         "min": 0,
         "max": 600,
         "round": 0,
@@ -376,6 +438,12 @@
       {
         "type": "toggle",
         "name": "Griffin burrow waypoints",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Griffin burrow waypoints Show path",
         "value": false,
         "hidden": false
       }
@@ -423,7 +491,7 @@
       {
         "type": "string_selector",
         "name": "What stat to use as 'skill'",
-        "value": 1,
+        "value": 0,
         "options": [
           "Skill Average",
           "Catacombs",

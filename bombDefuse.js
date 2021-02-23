@@ -1,6 +1,6 @@
 /// <reference types="../CTAutocomplete" />
 /// <reference lib="es2015" />
-module.exports = {};
+        //One day i will finish this
 
 const GlStateManager = Java.type("net.minecraft.client.renderer.GlStateManager");
 const GL11 = Java.type("org.lwjgl.opengl.GL11");
