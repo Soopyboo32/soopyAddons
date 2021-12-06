@@ -1,0 +1,21 @@
+
+[general]
+
+	[general.category]
+		color_picker = "255,66,194,55"
+		text = ""
+
+[spam_hider]
+	enable_spam_hider = true
+	block_the_messages_instead_of_just_moving_them = true
+	what_corner_of_the_screen_for_the_messages_to_show_at = 1
+	just_remove_some_annoying_messages = true
+	move_some_messages_from_main_chat = true
+
+[improvements]
+	better_line_break = true
+	show_slayer_exp_in_chat = false
+
+	[improvements.mort_gui]
+		better_mort_gui = true
+

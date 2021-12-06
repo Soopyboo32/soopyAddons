@@ -1,0 +1,645 @@
+[
+  {
+    "name": "Info",
+    "settings": [
+      {
+        "type": "button",
+        "name": "&6Soopy&7Addons",
+        "text": "&7Version v0.1.148",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "Reset Settings",
+        "text": "click",
+        "method": "/Function(\n() => {\n    ChatLib.simulateChat(\"&cReset settings. &7(For SoopyAddons Chattriggers Module)\");\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "Command Help",
+        "text": "click",
+        "method": "/Function(\n() => {\n    ChatLib.chat(\"&6Soopy&7Addons &7Command help\");\n    ChatLib.chat(\" &r- /soopy player [ign] &7: Will show that player's skyblock stats in chat\");\n    ChatLib.chat(\" &r- /soopy guild [guild name] &7: Will show that guilds's stats lb for skill/slayer\");\n    ChatLib.chat(\" &r- /dung &7: Will warp to the dungeon hub\");\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "Discord server",
+        "text": "click",
+        "method": "/Function(\n() => {\n    ChatLib.chat(\"&6Soopy&7Addons &7Discord server\");\n    ChatLib.chat(new TextComponent(\" &r- https://discord.gg/WShxTFY\").setClick(\"open_url\", \"https://discord.gg/WShxTFY\"));\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "Credits",
+        "text": "click",
+        "method": "/Function(\n() => {\n    ChatLib.chat(\"&6Soopy&7Addons &7Credits\");\n    ChatLib.chat(\" &r- &6Antonio32A &7: Code for drawing boxes around things\");\n    ChatLib.chat(\" &r- &6Phxntomexile &7: Beta tester and Lots of ideas\");\n    ChatLib.chat(\" &r- &6Agentlai &7: Beta tester\");\n    ChatLib.chat(\" &r- &6vNoxus &7: Ideas and bug testing\");\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "If you cannot see the tabs at the top of the settings",
+        "text": "",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "Turn down ur gui scale (u can turn it back after)",
+        "text": "",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "Improvements",
+    "settings": [
+      {
+        "type": "toggle",
+        "name": "Better line break",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "",
+        "text": "Mort is the person who lets you join dungeons and does party finder",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "",
+        "text": "This feature may brake with NEU calender notifications and timer in inventory",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Better Mort GUI",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Disable Better Mort GUI On Party Finder",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show slayer exp when you kill a boss",
+        "value": false,
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "Spam hider",
+    "settings": [
+      {
+        "type": "toggle",
+        "name": "Enable spam hider",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Block some useless messages",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Move some messages from main chat and to the right side of the screen",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Just block the messages from showing instead of moving them",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "Location of where the messages get moved to:",
+        "text": "&cClick to send a test message",
+        "method": "/Function(\n() => {\n    ChatLib.simulateChat(\"&cThis is a test message. &7(For SoopyAddons Chattriggers Module)\");\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "string_selector",
+        "name": "What corner of the screen?",
+        "value": 2,
+        "options": [
+          "Top left",
+          "Top Right",
+          "Bottom Right"
+        ],
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "ADVANCED: x Offset",
+        "value": "-1",
+        "min": -500,
+        "max": 500,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "ADVANCED: y Offset",
+        "value": 0,
+        "min": -500,
+        "max": 500,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "Change messages that are moved / hidden",
+        "text": "click",
+        "method": "/Function(\n() => {\n    ChatLib.simulateChat(\"&cOPENING MESSAGE EDITS\");\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Attempt to add messages advertising auctions / discords to spam hider",
+        "value": false,
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "Performance",
+    "settings": [
+      {
+        "type": "button",
+        "name": "",
+        "text": "It is recomended to leave these values at default settings",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Enable Tick event",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Auto ct load suggestion message",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Auto ct load",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Entity Render Limit",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Number of entities",
+        "value": "57",
+        "min": 0,
+        "max": 1000,
+        "round": 0,
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "Dungeons",
+    "settings": [
+      {
+        "type": "toggle",
+        "name": "Watcher finished spawning mobs alert",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Dungeons 1m in alert",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Dungeons 80% in alert",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show spirit bear / correct livid HP",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Spirit Bear HP X",
+        "value": 10,
+        "min": 0,
+        "max": 960,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Spirit Bear HP Y",
+        "value": 40,
+        "min": 0,
+        "max": 600,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show box around Spirit Bear and Spirit Bow and Correct Livid",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show no armour message when entering a dungeon",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Put a box around bats",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Put a red box around skeleton masters",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "button",
+        "name": "",
+        "text": "",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Ice Puzzle solver",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Among us solvers",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Three associates solver",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Teleport pad solver",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Explosive shot timer / guided sheep",
+        "value": true,
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "HUD",
+    "settings": [
+      {
+        "type": "toggle",
+        "name": "Show FPS and CPS",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show min fps",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show HYPERION hits / second",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show HYPERION hits / second allways",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Text shadow for HUD",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "FPS and CPS Display X",
+        "value": 10,
+        "min": 0,
+        "max": 960,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "FPS and CPS Display Y",
+        "value": "207",
+        "min": 0,
+        "max": 600,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "HYPERION hits / second X",
+        "value": 10,
+        "min": 0,
+        "max": 960,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "HYPERION hits / second Y",
+        "value": 50,
+        "min": 0,
+        "max": 600,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show 'BOSS SLAIN' Message when you have a empty slayer quest",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show 'BOSS SPAWNED' Message when you have spawned a slayer",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show current pet",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Current pet more info",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Pet Display X",
+        "value": 10,
+        "min": 0,
+        "max": 960,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Pet Display Y",
+        "value": "180",
+        "min": 0,
+        "max": 600,
+        "round": 0,
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "HUD2",
+    "settings": [
+      {
+        "type": "button",
+        "name": "",
+        "text": "Show soulflow count requires you to have a soulflow pile/battery/supercell in your inventory",
+        "method": "/Function(\n() => {\n}\n)/",
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show soulflow count",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show soulflow count always",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Soulflow count X",
+        "value": "946",
+        "min": 0,
+        "max": 960,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Soulflow count Y",
+        "value": "237",
+        "min": 0,
+        "max": 600,
+        "round": 0,
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "Events",
+    "settings": [
+      {
+        "type": "toggle",
+        "name": "Griffin burrow waypoints",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Griffin burrow waypoints Show path",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Red text for closes burrial uses pathfinding to find best path (not nearest)",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show diana waypoint update timer",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Show diana waypoint update timer X",
+        "value": 10,
+        "min": 0,
+        "max": 960,
+        "round": 0,
+        "hidden": false
+      },
+      {
+        "type": "slider",
+        "name": "Show diana waypoint update timer Y",
+        "value": "260",
+        "min": 0,
+        "max": 600,
+        "round": 0,
+        "hidden": false
+      }
+    ]
+  },
+  {
+    "name": "Other",
+    "settings": [
+      {
+        "type": "toggle",
+        "name": "Show SBG reminders as title",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Better guild messages",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Puzzler solver",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Fetchur solver",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show player's 'skill' next to their name in skyblock.",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "string_selector",
+        "name": "What stat to use as 'skill'",
+        "value": 1,
+        "options": [
+          "Skill Average",
+          "Catacombs",
+          "Total Slayer",
+          "Soopy Skill"
+        ],
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Old Ability Messages",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Rare drop alert",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Disable set hypixel api key alert",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Trevor the tracker waypoints",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Trevor the tracker timer",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Mines waypoints (syncs with other users)",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Enderman Slayer Beacon Alert",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show enderman slayer eye count",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show enderman slayer eye hitbox",
+        "value": false,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show enderman slayer eye and beacon only when boss spawned",
+        "value": true,
+        "hidden": false
+      },
+      {
+        "type": "toggle",
+        "name": "Show wither impact absorbtion cooldown",
+        "value": true,
+        "hidden": false
+      }
+    ]
+  }
+]

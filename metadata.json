@@ -1,0 +1,15 @@
+{
+  "$schema": "../CTAutocomplete/schema.json",
+  "name": "soopyAddons",
+  "description": "Custom soopy stuff.",
+  "author": "Soopyboo32",
+  "entry": "index.js",
+  "version": "0.1.149",
+  "requires": [
+    "soopyApis",
+    "SettingsManager",
+    "soopyAddonsData",
+    "CustomTabCompletions",
+    "PersistentKeyBinds"
+  ]
+}
